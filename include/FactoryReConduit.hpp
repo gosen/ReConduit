@@ -1,5 +1,5 @@
-#ifndef __FACTORY_CONDUIT__HPP__
-#define __FACTORY_CONDUIT__HPP__
+#ifndef __FACTORY_RECONDUIT__HPP__
+#define __FACTORY_RECONDUIT__HPP__
 
 #include "ReConduitVisitors.hpp"
 #include "ReConduitPool.hpp"
@@ -80,4 +80,4 @@ private:
 
 }
 
-#endif  // __FACTORY_CONDUIT__HPP__
+#endif  // __FACTORY_RECONDUIT__HPP__

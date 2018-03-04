@@ -1,5 +1,5 @@
-#ifndef __CONDUIT_TYPES__HPP__
-#define __CONDUIT_TYPES__HPP__
+#ifndef __RECONDUIT_TYPES__HPP__
+#define __RECONDUIT_TYPES__HPP__
 
 #include "ReConduitLogger.hpp"
 #include "ReConduitTypesGenerators.hpp"
@@ -23,4 +23,4 @@ using conduit_type = generate_type_from<Protocol, Adapter, Mux, Factory>;
 #include "FactoryReConduit.hpp"
 
 
-#endif //__CONDUIT_TYPES__HPP__
+#endif //__RECONDUIT_TYPES__HPP__

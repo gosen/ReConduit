@@ -1,5 +1,5 @@
-#ifndef __RELEASE_MESSAGE_CONDUIT__HPP__
-#define __RELEASE_MESSAGE_CONDUIT__HPP__
+#ifndef __RELEASE_MESSAGE_RECONDUIT__HPP__
+#define __RELEASE_MESSAGE_RECONDUIT__HPP__
 
 #include "EmbeddedMessage.hpp"
 
@@ -37,4 +37,4 @@ private:
 
 }
 
-#endif  // __RELEASE_MESSAGE_CONDUIT__HPP__
+#endif  // __RELEASE_MESSAGE_RECONDUIT__HPP__

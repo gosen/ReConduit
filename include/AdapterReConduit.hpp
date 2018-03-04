@@ -1,5 +1,5 @@
-#ifndef __ADAPTER_CONDUIT__HPP__
-#define __ADAPTER_CONDUIT__HPP__
+#ifndef __ADAPTER_RECONDUIT__HPP__
+#define __ADAPTER_RECONDUIT__HPP__
 
 #include "ReConduitVisitors.hpp"
 #include "ReConduitPool.hpp"
@@ -76,4 +76,4 @@ private:
 
 }
 
-#endif  // __ADAPTER_CONDUIT__HPP__
+#endif  // __ADAPTER_RECONDUIT__HPP__

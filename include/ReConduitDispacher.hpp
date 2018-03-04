@@ -1,5 +1,5 @@
-#ifndef __CONDUIT_DISPACHER__HPP__
-#define __CONDUIT_DISPACHER__HPP__
+#ifndef __RECONDUIT_DISPACHER__HPP__
+#define __RECONDUIT_DISPACHER__HPP__
 
 #include "ReConduitFwd.hpp"
 #include "ReConduitVisitors.hpp"
@@ -81,4 +81,4 @@ private:
 
 }
 
-#endif  // __CONDUIT_DISPACHER__HPP__
+#endif  // __RECONDUIT_DISPACHER__HPP__

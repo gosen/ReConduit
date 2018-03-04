@@ -1,5 +1,5 @@
-#ifndef __CONDUIT_MESSAGE_TYPES__HPP__
-#define __CONDUIT_MESSAGE_TYPES__HPP__
+#ifndef __RECONDUIT_MESSAGE_TYPES__HPP__
+#define __RECONDUIT_MESSAGE_TYPES__HPP__
 
 #include "SetupMessage.hpp"
 #include "ReleaseMessage.hpp"
@@ -22,4 +22,4 @@ using message_type = std::variant<
 
 
 
-#endif //__CONDUIT_MESSAGE_TYPES__HPP__
+#endif //__RECONDUIT_MESSAGE_TYPES__HPP__

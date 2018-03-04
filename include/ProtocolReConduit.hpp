@@ -1,5 +1,5 @@
-#ifndef __PROTOCOL_CONDUIT__HPP__
-#define __PROTOCOL_CONDUIT__HPP__
+#ifndef __PROTOCOL_RECONDUIT__HPP__
+#define __PROTOCOL_RECONDUIT__HPP__
 
 #include "ReConduitVisitors.hpp"
 #include "ReConduitPool.hpp"
@@ -90,4 +90,4 @@ private:
 
 }
 
-#endif  // __PROTOCOL_CONDUIT__HPP__
+#endif  // __PROTOCOL_RECONDUIT__HPP__

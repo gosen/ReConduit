@@ -1,5 +1,5 @@
-#ifndef __CONDUIT_TYPES_GENERATORS__HPP__
-#define __CONDUIT_TYPES_GENERATORS__HPP__
+#ifndef __RECONDUIT_TYPES_GENERATORS__HPP__
+#define __RECONDUIT_TYPES_GENERATORS__HPP__
 
 #include "ReConduitFwd.hpp"
 
@@ -18,4 +18,4 @@ using generate_type_from = std::variant<std::add_pointer_t<std::decay_t<T>>...>;
 #define GENERATE_MUX_CONDUITS( M... )      namespace reconduits { using mux_type      = generate_type_from<M>; }
 #define GENERATE_PROTOCOL_CONDUITS( P... ) namespace reconduits { using protocol_type = generate_type_from<P>; }
 
-#endif //__CONDUIT_TYPES_GENERATORS__HPP__
+#endif //__RECONDUIT_TYPES_GENERATORS__HPP__

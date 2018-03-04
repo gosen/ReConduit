@@ -1,5 +1,5 @@
-#ifndef __CONDUIT_LOGGER__HPP__
-#define __CONDUIT_LOGGER__HPP__
+#ifndef __RECONDUIT_LOGGER__HPP__
+#define __RECONDUIT_LOGGER__HPP__
 
 #include "spdlog/spdlog.h"
 
@@ -24,4 +24,4 @@ inline auto getLogger(std::string logger_name = "conduits")
 
 }
 
-#endif //__CONDUIT_LOGGER__HPP__
+#endif //__RECONDUIT_LOGGER__HPP__

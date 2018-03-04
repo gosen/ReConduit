@@ -1,5 +1,5 @@
-#ifndef __CONDUIT_POOL__HPP__
-#define __CONDUIT_POOL__HPP__
+#ifndef __RECONDUIT_POOL__HPP__
+#define __RECONDUIT_POOL__HPP__
 
 #include "ReConduitLogger.hpp"
 
@@ -88,4 +88,4 @@ inline void putToPool(void* value)
 
 }
 
-#endif //__CONDUIT_POOL__HPP__
+#endif //__RECONDUIT_POOL__HPP__

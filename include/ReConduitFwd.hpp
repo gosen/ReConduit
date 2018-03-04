@@ -1,5 +1,5 @@
-#ifndef __CONDUIT_COMMONS__HPP__
-#define __CONDUIT_COMMONS__HPP__
+#ifndef __RECONDUIT_COMMONS__HPP__
+#define __RECONDUIT_COMMONS__HPP__
 
 #include "MessageTypes.hpp"
 
@@ -11,4 +11,4 @@ class Conduit; // Forward declaration
 
 }
 
-#endif // __CONDUIT_COMMONS__HPP__
+#endif // __RECONDUIT_COMMONS__HPP__

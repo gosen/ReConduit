@@ -1,5 +1,5 @@
-#ifndef __CONDUIT_VISITORS__HPP__
-#define __CONDUIT_VISITORS__HPP__
+#ifndef __RECONDUIT_VISITORS__HPP__
+#define __RECONDUIT_VISITORS__HPP__
 
 #include <variant>
 #include <type_traits>
@@ -34,4 +34,4 @@ constexpr void dispatchFor(V v, auto&& f)
 
 }
 
-#endif //__CONDUIT_VISITORS__HPP__
+#endif //__RECONDUIT_VISITORS__HPP__

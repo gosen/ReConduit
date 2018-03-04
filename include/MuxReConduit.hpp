@@ -1,5 +1,5 @@
-#ifndef __MUX_CONDUIT__HPP__
-#define __MUX_CONDUIT__HPP__
+#ifndef __MUX_RECONDUIT__HPP__
+#define __MUX_RECONDUIT__HPP__
 
 #include "ReConduitVisitors.hpp"
 #include "ReConduitPool.hpp"
@@ -123,4 +123,4 @@ private:
 
 }
 
-#endif  // __MUX_CONDUIT__HPP__
+#endif  // __MUX_RECONDUIT__HPP__
