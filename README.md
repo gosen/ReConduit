@@ -12,7 +12,7 @@ Well-designed frameworks evolve naturally. That being the case, it seems like a 
 
 But how it might be improved this design pattern? The answer is getting *compile-time polymorphism* to the next step.
 
-From **A Framework for Network Protocol Software** paper (Hermann Hüni. Ralph Johnson and Robert Engel. 1995) we read:
+From [**A Framework for Network Protocol Software** paper](doc/A_Framework_for_Network_Protocol_Software.pdf) (Hermann Hüni. Ralph Johnson and Robert Engel. 1995.) we read:
 
 *Conduit+ framework is made up of two sorts of objects, conduits and information chunks. A conduit is a software component with two distinct sides, *sideA* and *sideB*. A conduit may be connected on each of its sides to other conduits, which are its neighbor conduits. A conduit accepts chunks of information from a neighbor conduit on one side and delivers them to a conduit on the opposite side. Conduits are bidirectional, so both its neighbors can send it information.
 
