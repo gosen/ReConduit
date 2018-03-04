@@ -1,9 +1,9 @@
 #ifndef __MUX_CONDUIT__HPP__
 #define __MUX_CONDUIT__HPP__
 
-#include "ConduitVisitors.hpp"
-#include "ConduitPool.hpp"
-#include "ConduitFwd.hpp"
+#include "ReConduitVisitors.hpp"
+#include "ReConduitPool.hpp"
+#include "ReConduitFwd.hpp"
 
 #include <type_traits>
 

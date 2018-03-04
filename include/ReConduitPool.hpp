@@ -1,7 +1,7 @@
 #ifndef __CONDUIT_POOL__HPP__
 #define __CONDUIT_POOL__HPP__
 
-#include "ConduitLogger.hpp"
+#include "ReConduitLogger.hpp"
 
 #include <memory>
 #include <forward_list>

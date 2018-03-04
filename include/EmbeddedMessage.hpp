@@ -1,7 +1,7 @@
 #ifndef __EMBEDDED_MESSAGE_CONDUIT__HPP__
 #define __EMBEDDED_MESSAGE_CONDUIT__HPP__
 
-#include "ConduitPool.hpp"
+#include "ReConduitPool.hpp"
 #include <type_traits>
 
 namespace reconduits {

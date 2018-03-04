@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "spdlog/spdlog.h"
 
-#include "ConduitTypesGenerators.hpp"
+#include "ReConduitTypesGenerators.hpp"
 #include "sol.hpp"
 
 #include <unordered_map>
@@ -226,7 +226,7 @@ GENERATE_FACTORY_CONDUITS(  TCPConnectionFactory                  );
 GENERATE_MUX_CONDUITS(      ConnectionsMux, ConnectionsLUAMux     );
 GENERATE_PROTOCOL_CONDUITS( IPProtocol, TCPProtocol, HTTPProtocol );
 
-#include "ConduitTypes.hpp"
+#include "ReConduitTypes.hpp"
 
 //////////////////////////////////////
 // Inline definitions

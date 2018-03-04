@@ -1,7 +1,7 @@
 #ifndef __CONDUIT_TYPES_GENERATORS__HPP__
 #define __CONDUIT_TYPES_GENERATORS__HPP__
 
-#include "ConduitFwd.hpp"
+#include "ReConduitFwd.hpp"
 
 #include <variant>
 #include <type_traits>

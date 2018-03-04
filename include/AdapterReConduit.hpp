@@ -1,8 +1,8 @@
 #ifndef __ADAPTER_CONDUIT__HPP__
 #define __ADAPTER_CONDUIT__HPP__
 
-#include "ConduitVisitors.hpp"
-#include "ConduitPool.hpp"
+#include "ReConduitVisitors.hpp"
+#include "ReConduitPool.hpp"
 
 #include <type_traits>
 

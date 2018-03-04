@@ -1,10 +1,10 @@
 #ifndef __CONDUIT_DISPACHER__HPP__
 #define __CONDUIT_DISPACHER__HPP__
 
-#include "ConduitFwd.hpp"
-#include "ConduitVisitors.hpp"
-#include "ConduitLogger.hpp"
-#include "ConduitPool.hpp"
+#include "ReConduitFwd.hpp"
+#include "ReConduitVisitors.hpp"
+#include "ReConduitLogger.hpp"
+#include "ReConduitPool.hpp"
 
 #include <type_traits>
 
