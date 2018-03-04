@@ -12,11 +12,11 @@ Well-designed frameworks evolve naturally. That being the case, it seems like a 
 
 But how it might be improved this design pattern? The answer is getting *compile-time polymorphism* to the next step.
 
-From [**A Framework for Network Protocol Software** paper](doc/A_Framework_for_Network_Protocol_Software.pdf) (Hermann Hüni. Ralph Johnson and Robert Engel. 1995.) we read:
+From ["**A Framework for Network Protocol Software**" paper](doc/A_Framework_for_Network_Protocol_Software.pdf) (Hermann Hüni. Ralph Johnson and Robert Engel. 1995.) we read:
 
-*Conduit+ framework is made up of two sorts of objects, conduits and information chunks. A conduit is a software component with two distinct sides, *sideA* and *sideB*. A conduit may be connected on each of its sides to other conduits, which are its neighbor conduits. A conduit accepts chunks of information from a neighbor conduit on one side and delivers them to a conduit on the opposite side. Conduits are bidirectional, so both its neighbors can send it information.
+*"Conduit+ framework is made up of two sorts of objects, conduits and information chunks. A conduit is a software component with two distinct sides, *sideA* and *sideB*. A conduit may be connected on each of its sides to other conduits, which are its neighbor conduits. A conduit accepts chunks of information from a neighbor conduit on one side and delivers them to a conduit on the opposite side. Conduits are bidirectional, so both its neighbors can send it information.*
 
-There are four kinds of conduits, all of which have one neighbor on sideA. A *Mux* can have many neighbors on sideB, an *Adapter* has no neighbor conduit on sideB, and a *Protocol* and *Factory* have exactly one.*
+*There are four kinds of conduits, all of which have one neighbor on sideA. A *Mux* can have many neighbors on sideB, an *Adapter* has no neighbor conduit on sideB, and a *Protocol* and *Factory* have exactly one."*
 
 The basic idea of Conduit framework is to get *InformationChunk* messages from one conduit to another back and forward sidaA or sideB interfaces. As long as all kind of conduits support those conduit interconnection, messages are able to transist over them.
 
