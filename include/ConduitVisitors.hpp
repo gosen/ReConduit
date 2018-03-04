@@ -4,7 +4,7 @@
 #include <variant>
 #include <type_traits>
 
-namespace conduits {
+namespace reconduits {
 
 template<typename V>
 constexpr void dispatch(V v, auto&& f)

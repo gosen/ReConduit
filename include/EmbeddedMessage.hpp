@@ -4,7 +4,7 @@
 #include "ConduitPool.hpp"
 #include <type_traits>
 
-namespace conduits {
+namespace reconduits {
 
 template<typename T>
 using embedded_t = typename std::decay_t<T>::value_type;

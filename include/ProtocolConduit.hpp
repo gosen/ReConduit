@@ -6,7 +6,7 @@
 
 #include <type_traits>
 
-namespace conduits {
+namespace reconduits {
 
 class Conduit;
 

@@ -6,7 +6,7 @@
 #include <string>
 #include <iostream>
 
-namespace conduits {
+namespace reconduits {
 
 template<typename T, unsigned int sz = sizeof(T)> struct PrintType;
 template<typename T, unsigned int sz = sizeof(T)> struct PrintT

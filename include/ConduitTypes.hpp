@@ -4,7 +4,7 @@
 #include "ConduitLogger.hpp"
 #include "ConduitTypesGenerators.hpp"
 
-namespace conduits {
+namespace reconduits {
 
 class Protocol;
 class Adapter;

@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <cstdint>
 
-namespace conduits {
+namespace reconduits {
 
 template<std::size_t RequestedSize>
 class ConduitsPool

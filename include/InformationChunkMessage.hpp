@@ -6,7 +6,7 @@
 #include <iostream>
 #include <any>
 
-namespace conduits {
+namespace reconduits {
 
 template<typename T>
 class InformationChunk : public EmbeddedMessage<T>

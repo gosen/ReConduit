@@ -6,7 +6,7 @@
 #include <iostream>
 #include <type_traits>
 
-namespace conduits {
+namespace reconduits {
 
 template<typename T>
 class Alerting : public EmbeddedMessage<T>

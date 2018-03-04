@@ -3,7 +3,7 @@
 
 #include "MessageTypes.hpp"
 
-namespace conduits {
+namespace reconduits {
 
 enum class NextSide { done, a, b, b0 };
 

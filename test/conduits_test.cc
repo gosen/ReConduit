@@ -65,7 +65,7 @@ struct NetworkAdapter
     {
         auto& emsg = msg.get();
         emsg.append( "NetworkAdapter" );
-        return emsg.isUpLink() ? conduits::NextSide::a : conduits::NextSide::done;
+        return emsg.isUpLink() ? reconduits::NextSide::a : reconduits::NextSide::done;
     }
 };
 
@@ -75,7 +75,7 @@ struct ApplicationAdapter
     {
         auto& emsg = msg.get();
         emsg.append( "ApplicationAdapter" );
-        return ! emsg.isUpLink() ? conduits::NextSide::a : conduits::NextSide::done;
+        return ! emsg.isUpLink() ? reconduits::NextSide::a : reconduits::NextSide::done;
     }
 };
 
@@ -87,18 +87,18 @@ class TCPConnectionFactory
 {
 public:
 
-    constexpr conduits::Conduit* accept(auto&& msg, conduits::Conduit* a, conduits::Conduit* b)
+    constexpr reconduits::Conduit* accept(auto&& msg, reconduits::Conduit* a, reconduits::Conduit* b)
     {
         using T = std::decay_t<decltype(msg)>;
-        if      constexpr (std::is_same_v<T, conduits::Setup<Message>>) return create(msg, a, b);
-        else if constexpr (std::is_same_v<T, conduits::Release<Message>>) clean(msg, a, b);
+        if      constexpr (std::is_same_v<T, reconduits::Setup<Message>>) return create(msg, a, b);
+        else if constexpr (std::is_same_v<T, reconduits::Release<Message>>) clean(msg, a, b);
         return nullptr;
     }
 
 private:
 
-    conduits::Conduit* create(conduits::Setup<Message>& msg, conduits::Conduit* a, conduits::Conduit* b);
-    void clean(conduits::Release<Message>& msg, conduits::Conduit* a, conduits::Conduit* b);
+    reconduits::Conduit* create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b);
+    void clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b);
 };
 
 //////////////////////////////////////
@@ -110,16 +110,16 @@ class ConnectionsMux
 public:
 
     using key_type   = int;
-    using value_type = conduits::Conduit*;
+    using value_type = reconduits::Conduit*;
 
     constexpr auto accept(auto&& msg)
     {
         SPDLOG_DEBUG(getLogger(), "ConnectionsMux [{:p}] accepts a new message.", static_cast<void*>(this));
         auto& emsg = msg.get();
         emsg.append( "ConnectionsMux" );
-        if( emsg.isSecondMux() ) return conduits::NextSide::a;
+        if( emsg.isSecondMux() ) return reconduits::NextSide::a;
         emsg.setSecondMux();
-        return conduits::NextSide::b;
+        return reconduits::NextSide::b;
     }
 
     auto find(auto&& msg) const
@@ -130,22 +130,22 @@ public:
         return std::pair{(found ? it->second : nullptr), found};
     }
 
-    auto insert(auto&& key, conduits::Conduit& c)
+    auto insert(auto&& key, reconduits::Conduit& c)
     {
         SPDLOG_DEBUG(getLogger(), "ConnectionsMux [{:p}] is going to connect new conduits.", static_cast<void*>(this));
         auto [it, inserted] = mux_table_.emplace(key, &c);
         if( inserted ) return it->second;
         else {
             getLogger()->warn("The new connection for key {} was not possible.", key);
-            return static_cast<conduits::Conduit*>( nullptr );
+            return static_cast<reconduits::Conduit*>( nullptr );
         }
     }
 
-    auto create(conduits::Conduit* conduit_origin, auto&& msg) const
+    auto create(reconduits::Conduit* conduit_origin, auto&& msg) const
     {
         SPDLOG_DEBUG(getLogger(), "ConnectionsMux [{:p}] is going to create new conduits.", static_cast<const void*>(this));
         auto& emsg = msg.get();
-        return conduits::Setup<conduits::embedded_t<decltype(msg)>>{emsg, conduit_origin};
+        return reconduits::Setup<reconduits::embedded_t<decltype(msg)>>{emsg, conduit_origin};
     }
 
     auto erase(auto&& key)
@@ -156,12 +156,12 @@ public:
             mux_table_.erase( it );
             return it->second;
         } else
-            return static_cast<conduits::Conduit*>( nullptr );
+            return static_cast<reconduits::Conduit*>( nullptr );
     }
 
 protected:
 
-    using mux_table_type = std::unordered_map<key_type, conduits::Conduit*>;
+    using mux_table_type = std::unordered_map<key_type, reconduits::Conduit*>;
     mux_table_type mux_table_;
 };
 
@@ -174,9 +174,9 @@ public:
         auto& emsg = msg.get();
         lua.set_function("getId", [ & ]{ emsg.append( "ConnectionsLUAMux" ); });
         lua.script("getId()");
-        if( emsg.isSecondMux() ) return conduits::NextSide::a;
+        if( emsg.isSecondMux() ) return reconduits::NextSide::a;
         emsg.setSecondMux();
-        return conduits::NextSide::b;
+        return reconduits::NextSide::b;
     }
 
 private:
@@ -193,7 +193,7 @@ struct IPProtocol
     {
         auto& emsg = msg.get();
         emsg.append( "IPProtocol" );
-        return std::pair{ (emsg.isUpLink() ? conduits::NextSide::b : conduits::NextSide::a), &msg };
+        return std::pair{ (emsg.isUpLink() ? reconduits::NextSide::b : reconduits::NextSide::a), &msg };
     }
 };
 
@@ -203,7 +203,7 @@ struct TCPProtocol
     {
         auto& emsg = msg.get();
         emsg.append( "TCPProtocol" );
-        return std::pair{ (emsg.isUpLink() ? conduits::NextSide::b : conduits::NextSide::a), &msg };
+        return std::pair{ (emsg.isUpLink() ? reconduits::NextSide::b : reconduits::NextSide::a), &msg };
     }
 };
 
@@ -213,7 +213,7 @@ struct HTTPProtocol
     {
         auto& emsg = msg.get();
         emsg.append( "HTTPProtocol" );
-        return std::pair{ (emsg.isUpLink() ? conduits::NextSide::b : conduits::NextSide::a), &msg };
+        return std::pair{ (emsg.isUpLink() ? reconduits::NextSide::b : reconduits::NextSide::a), &msg };
     }
 };
 
@@ -232,9 +232,9 @@ GENERATE_PROTOCOL_CONDUITS( IPProtocol, TCPProtocol, HTTPProtocol );
 // Inline definitions
 //////////////////////////////////////
 
-inline conduits::Conduit* TCPConnectionFactory::create(conduits::Setup<Message>& msg, conduits::Conduit* a, conduits::Conduit* b)
+inline reconduits::Conduit* TCPConnectionFactory::create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
 {
-    using namespace conduits;
+    using namespace reconduits;
     auto& p2 = *new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ TCPProtocol{} } };
     auto& p3 = *new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ HTTPProtocol{} } };
 
@@ -254,12 +254,12 @@ inline conduits::Conduit* TCPConnectionFactory::create(conduits::Setup<Message>&
         return a->insertInSideB(key, p2) && b->insertInSideB(key, p3) ? &p3 : nullptr;
 }
 
-void TCPConnectionFactory::clean(conduits::Release<Message>& msg, conduits::Conduit* a, conduits::Conduit* b)
+void TCPConnectionFactory::clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
 {
     auto& emsg = msg.get();
     emsg.append( "TCPConnectionFactory: Release" );
     auto key = emsg.getId();
-    using namespace conduits;
+    using namespace reconduits;
     putToPool<sizeof(Conduit)>( a->eraseFromSideB( key ) );
     putToPool<sizeof(Conduit)>( b->eraseFromSideB( key ) );
 }
@@ -271,7 +271,7 @@ void TCPConnectionFactory::clean(conduits::Release<Message>& msg, conduits::Cond
 TEST(ConduitTest, SimpleMessages) {
 
     using namespace std;
-    using namespace conduits;
+    using namespace reconduits;
 
     spdlog::set_level(spdlog::level::warn);
     auto logger = spdlog::stdout_color_mt("conduits_test");

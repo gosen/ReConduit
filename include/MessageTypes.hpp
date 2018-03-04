@@ -8,7 +8,7 @@
 
 #include <variant>
 
-namespace conduits {
+namespace reconduits {
 
 template<typename T>
 using message_type = std::variant<
