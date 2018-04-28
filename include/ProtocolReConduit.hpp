@@ -63,7 +63,7 @@ private:
     constexpr void setSideA(Conduit& a) noexcept { conduit_to_side_a_ = &a; }
     constexpr void setSideB(Conduit& b) noexcept { conduit_to_side_b_ = &b; }
 
-    constexpr auto accept(auto&& v_msg, Conduit* ctx_conduit)
+    constexpr auto accept(auto& v_msg, Conduit* ctx_conduit)
     {
         SPDLOG_DEBUG(getLogger(), "Protocol Conduit [{:p}] with [a,b] -> [{:p}, {:p}] accepts a new message.",
                 static_cast<void*>(this), static_cast<void*>(conduit_to_side_a_), static_cast<void*>(conduit_to_side_b_));
@@ -74,6 +74,7 @@ private:
             next = nx_side; v_msg = nx_msg;
         };
         doubleDispatch(protocol_, v_msg, accept);
+        //v_msg = nx_msg; // TODO: this is the key point now. Convert messages from one type to other.
 
         switch( next )
         {

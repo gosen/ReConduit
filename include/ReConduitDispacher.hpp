@@ -49,29 +49,26 @@ public:
         dispatch(conduit_, set_b);
     }
 
-    constexpr bool insertInSideB(auto&& key, Conduit& b)
+    constexpr Conduit* insertInSideB(auto&& key, Conduit& b)
     {
-        Conduit* next;
-        auto insert_b = [ & ](auto&& conduit_ptr) { next = conduit_ptr->insertInSideB(key, b); };
-        dispatchFor<Mux*>(conduit_, insert_b);
-        return next;
+        auto insert_b = [ & ](auto&& conduit_ptr) { return conduit_ptr->insertInSideB(key, b); };
+        return dispatchFor_r<Conduit*, Mux*>(conduit_, insert_b);
     }
 
     constexpr Conduit* eraseFromSideB(auto&& key)
     {
-        Conduit* next;
-        auto erase_b = [ & ](auto&& conduit_ptr) { next = conduit_ptr->eraseFromSideB( key ); };
-        dispatchFor<Mux*>(conduit_, erase_b);
-        return next;
+        auto erase_b = [ & ](auto&& conduit_ptr) { return conduit_ptr->eraseFromSideB( key ); };
+        return dispatchFor_r<Conduit*, Mux*>(conduit_, erase_b);
     }
 
     constexpr void accept(auto&& msg)
     {
         auto v_msg = message_type<embedded_t<decltype(msg)>>{ &msg };
-        Conduit* next;
-        auto accept = [ & ](auto&& conduit_ptr) { next = conduit_ptr->accept(v_msg, this); };
-        dispatch(conduit_, accept);
-        if( next ) next->accept( msg );
+        auto accept = [ & ](auto&& conduit_ptr) { return conduit_ptr->accept(v_msg, this); };
+        if( Conduit* next = dispatch_r(conduit_, accept) ) {
+            auto move_next = [ & ](auto&& message_ptr) { next->accept( *message_ptr ); };
+            dispatch(v_msg, move_next);
+        }
     }
 
 private:

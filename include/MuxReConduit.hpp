@@ -60,30 +60,24 @@ private:
 
     constexpr void setSideA(Conduit&  a) noexcept { conduit_to_side_a_  = &a; }
     constexpr void setSideB(Conduit& b0) noexcept { conduit_to_side_b0_ = &b0; }
-    constexpr auto insertInSideB(auto&& key, Conduit& b)
+    constexpr Conduit* insertInSideB(auto&& key, Conduit& b)
     {
-        Conduit* next;
-        auto insert = [ & ](auto&& mux_ptr) { next = mux_ptr->insert(key, b); };
-        dispatch(mux_, insert);
-        return next;
+        auto insert = [ & ](auto&& mux_ptr) { return mux_ptr->insert(key, b); };
+        return dispatch_r(mux_, insert);
     }
 
-    constexpr auto eraseFromSideB(auto&& key)
+    constexpr Conduit* eraseFromSideB(auto&& key)
     {
-        Conduit* erased;
-        auto erase = [ & ](auto&& mux_ptr) { erased = mux_ptr->erase( key ); };
-        dispatch(mux_, erase);
-        return erased;
+        auto erase = [ & ](auto&& mux_ptr) { return mux_ptr->erase( key ); };
+        return dispatch_r(mux_, erase);
     }
 
     constexpr auto accept(auto&& v_msg, Conduit* ctx_conduit)
     {
         SPDLOG_DEBUG(getLogger(), "Mux Conduit [{:p}] with [a,b0] -> [{:p}, {:p}] accepts a new message.",
                 static_cast<void*>(this), static_cast<void*>(conduit_to_side_a_), static_cast<void*>(conduit_to_side_b0_));
-        NextSide next;
-        auto accept = [ & ](auto&& mux_ptr, auto&& msg_ptr) { next = mux_ptr->accept( *msg_ptr ); };
-        doubleDispatch(mux_, v_msg, accept);
-        switch( next ) {
+        auto accept = [](auto&& mux_ptr, auto&& msg_ptr) { return mux_ptr->accept( *msg_ptr ); };
+        switch( doubleDispatch_r(mux_, v_msg, accept) ) {
             case NextSide::a:  return conduit_to_side_a_;
             case NextSide::b0: return conduit_to_side_b0_;
             default: return accept_default(v_msg, ctx_conduit);
@@ -92,14 +86,11 @@ private:
 
     constexpr auto accept_default(auto&& v_msg, Conduit* ctx_conduit)
     {
-        Conduit* next_conduit;
-        bool found;
-        auto find = [ & ](auto&& mux_ptr, auto&& msg_ptr)
+        auto find = [](auto&& mux_ptr, auto&& msg_ptr)
         {
-            auto [nx, f] = mux_ptr->find( *msg_ptr );
-            next_conduit = nx; found = f;
+            return mux_ptr->find( *msg_ptr );
         };
-        doubleDispatch(mux_, v_msg, find);
+        auto [next_conduit, found] = doubleDispatch_r(mux_, v_msg, find);
         if( ! found ) {
             SPDLOG_DEBUG(getLogger(), "Mux Conduit [{:p}] with [a,b0] -> [{:p}, {:p}] needs new route to be created.",
                 static_cast<void*>(this), static_cast<void*>(conduit_to_side_a_), static_cast<void*>(conduit_to_side_b0_));

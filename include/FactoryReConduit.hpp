@@ -64,13 +64,11 @@ private:
     {
         SPDLOG_DEBUG(getLogger(), "Factory Conduit [{:p}] with [a,b] -> [{:p}, {:p}] accepts a new message.",
                 static_cast<void*>(this), static_cast<void*>(conduit_to_side_a_), static_cast<void*>(conduit_to_side_b_));
-        Conduit* next;
         auto accept = [ & ](auto&& factory_ptr, auto&& msg_ptr)
         {
-            next = factory_ptr->accept(*msg_ptr, this->conduit_to_side_a_, this->conduit_to_side_b_);
+            return factory_ptr->accept(*msg_ptr, this->conduit_to_side_a_, this->conduit_to_side_b_);
         };
-        doubleDispatch(factory_, v_msg, accept);
-        return next;
+        return doubleDispatch_r(factory_, v_msg, accept);
     }
 
     Conduit* conduit_to_side_a_;
