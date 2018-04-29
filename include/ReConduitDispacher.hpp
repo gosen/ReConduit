@@ -63,11 +63,12 @@ public:
 
     constexpr void accept(auto&& msg)
     {
-        auto v_msg = message_type<embedded_t<decltype(msg)>>{ &msg };
+        auto v_msg = make_variant_message( msg );
         auto accept = [ & ](auto&& conduit_ptr) { return conduit_ptr->accept(v_msg, this); };
-        if( Conduit* next = dispatch_r(conduit_, accept) ) {
-            auto move_next = [ & ](auto&& message_ptr) { next->accept( *message_ptr ); };
-            dispatch(v_msg, move_next);
+        auto [ next_conduit, next_v_msg ] = dispatch_r(conduit_, accept);
+        if( next_conduit ) {
+            auto move_next = [ & ](auto&& message_ptr) { next_conduit->accept( *message_ptr ); };
+            dispatch(next_v_msg, move_next);
         }
     }
 

@@ -26,14 +26,15 @@ public:
 
     constexpr auto accept(auto&& msg)
     {
+        using namespace reconduits;
         SPDLOG_DEBUG(getLogger(), "ConnectionsMux [{:p}] accepts a new message.", static_cast<void*>(this));
         auto& emsg = msg.get();
         emsg.append( "ConnectionsMux" );
         using T = std::decay_t<decltype(msg)>;
         if constexpr (std::is_same_v<T, reconduits::Release<Message>>)
-            return reconduits::NextSide::b0;
+            return std::pair{ NextSide::b0, make_variant_message( msg ) };
         else
-            return emsg.isUpLink() ? reconduits::NextSide::a : reconduits::NextSide::b;
+            return std::pair{ NextSide::b,  make_variant_message( msg ) };
     }
 
     auto find(auto&& msg) const
@@ -55,11 +56,11 @@ public:
         }
     }
 
-    auto create(reconduits::Conduit* conduit_origin, auto&& msg) const
+    auto setup(auto&& msg, reconduits::Conduit* conduit_origin) const
     {
+        using namespace reconduits;
         SPDLOG_DEBUG(getLogger(), "ConnectionsMux [{:p}] is going to create new conduits.", static_cast<const void*>(this));
-        auto& emsg = msg.get();
-        return reconduits::Setup<reconduits::embedded_t<decltype(msg)>>{emsg, conduit_origin};
+        return make_variant_setup_message(msg, conduit_origin);
     }
 
     auto erase(auto&& key)
@@ -84,11 +85,12 @@ class ConnectionsLUAMux : public ConnectionsMux
 public:
     constexpr auto accept(auto&& msg)
     {
+        using namespace reconduits;
         SPDLOG_DEBUG(getLogger(), "ConnectionsLUAMux [{:p}] accepts a new message.", static_cast<void*>(this));
         auto& emsg = msg.get();
         lua.set_function("getId", [ & ]{ emsg.append( "ConnectionsLUAMux" ); });
         lua.script("getId()");
-        return emsg.isUpLink() ? reconduits::NextSide::b : reconduits::NextSide::a;
+        return std::pair{ (emsg.isUpLink() ? NextSide::b : NextSide::a), make_variant_message( msg ) };
     }
 
 private:

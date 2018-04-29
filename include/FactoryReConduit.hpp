@@ -68,7 +68,8 @@ private:
         {
             return factory_ptr->accept(*msg_ptr, this->conduit_to_side_a_, this->conduit_to_side_b_);
         };
-        return doubleDispatch_r(factory_, v_msg, accept);
+        auto next_conduit = doubleDispatch_r(factory_, v_msg, accept);
+        return std::pair{ next_conduit, v_msg };
     }
 
     Conduit* conduit_to_side_a_;

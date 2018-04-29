@@ -63,24 +63,20 @@ private:
     constexpr void setSideA(Conduit& a) noexcept { conduit_to_side_a_ = &a; }
     constexpr void setSideB(Conduit& b) noexcept { conduit_to_side_b_ = &b; }
 
-    constexpr auto accept(auto& v_msg, Conduit* ctx_conduit)
+    constexpr auto accept(auto&& v_msg, Conduit* ctx_conduit)
     {
         SPDLOG_DEBUG(getLogger(), "Protocol Conduit [{:p}] with [a,b] -> [{:p}, {:p}] accepts a new message.",
                 static_cast<void*>(this), static_cast<void*>(conduit_to_side_a_), static_cast<void*>(conduit_to_side_b_));
-        NextSide next;
         auto accept = [ & ](auto&& protocol_ptr, auto&& msg_ptr)
         {
-            auto [ nx_side, nx_msg ] = protocol_ptr->accept( *msg_ptr );
-            next = nx_side; v_msg = nx_msg;
+            return protocol_ptr->accept(*msg_ptr, ctx_conduit);
         };
-        doubleDispatch(protocol_, v_msg, accept);
-        //v_msg = nx_msg; // TODO: this is the key point now. Convert messages from one type to other.
-
+        auto [ next, next_v_msg ] = doubleDispatch_r(protocol_, v_msg, accept);
         switch( next )
         {
-            case NextSide::a: return conduit_to_side_a_;
-            case NextSide::b: return conduit_to_side_b_;
-            default:          return static_cast<Conduit*>( nullptr );
+            case NextSide::a: return std::pair{ conduit_to_side_a_, next_v_msg };
+            case NextSide::b: return std::pair{ conduit_to_side_b_, next_v_msg };
+            default:          return std::pair{ static_cast<Conduit*>( nullptr ), v_msg };
         }
     }
 

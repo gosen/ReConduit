@@ -48,8 +48,6 @@ constexpr auto doubleDispatch_r(V v, M m, auto&& f)
     }, v);
 }
 
-template<class T> struct always_false : std::false_type {};
-
 template<typename R, typename... U, typename V>
 constexpr auto dispatchFor_r(V v, auto&& f)
 {
@@ -60,6 +58,7 @@ constexpr auto dispatchFor_r(V v, auto&& f)
         else return R{};
     }, v);
 }
+
 }
 
 #endif //__RECONDUIT_VISITORS__HPP__

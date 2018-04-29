@@ -64,9 +64,14 @@ private:
     {
         SPDLOG_DEBUG(getLogger(), "Adapter Conduit [{:p}] with [a] -> [{:p}] accepts a new message.",
                 static_cast<void*>(this), static_cast<void*>(conduit_to_side_a_));
-        auto accept = [](auto&& adapter_ptr, auto&& msg_ptr) { return adapter_ptr->accept( *msg_ptr ); };
-        NextSide next = doubleDispatch_r(adapter_, v_msg, accept);
-        return next == NextSide::a ? conduit_to_side_a_ : nullptr;
+        auto accept = [](auto&& adapter_ptr, auto&& msg_ptr)
+        {
+            return adapter_ptr->accept( *msg_ptr );
+        };
+        auto [ next, next_v_msg ] = doubleDispatch_r(adapter_, v_msg, accept);
+        return next == NextSide::a ?
+            std::pair{ conduit_to_side_a_, next_v_msg } :
+            std::pair{ static_cast<Conduit*>( nullptr ), v_msg };
     }
 
     Conduit* conduit_to_side_a_;

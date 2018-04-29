@@ -21,6 +21,11 @@ public:
         return getFromPool<sizeof(InformationChunk)>();
     }
 
+    static void* operator new(std::size_t sz, InformationChunk* p)
+    {
+        return ::operator new(sz, p);
+    }
+
     static void operator delete(void* p)
     {
         putToPool<sizeof(InformationChunk)>( p );

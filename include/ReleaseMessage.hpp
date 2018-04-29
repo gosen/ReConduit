@@ -25,6 +25,11 @@ public:
         return getFromPool<sizeof(Release)>();
     }
 
+    static void* operator new(std::size_t sz, Release* p)
+    {
+        return ::operator new(sz, p);
+    }
+
     static void operator delete(void* p)
     {
         putToPool<sizeof(Release)>( p );

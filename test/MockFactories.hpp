@@ -17,22 +17,25 @@ namespace mock_conduits {
 // Factories
 //////////////////////////////////////
 
-class TCPConnectionFactory
+class ConnectionFactory
 {
 public:
 
     constexpr reconduits::Conduit* accept(auto&& msg, reconduits::Conduit* a, reconduits::Conduit* b)
     {
         using T = std::decay_t<decltype(msg)>;
-        if      constexpr (std::is_same_v<T, reconduits::Setup<Message>>) return create(msg, a, b);
-        else if constexpr (std::is_same_v<T, reconduits::Release<Message>>) clean(msg, a, b);
-        return nullptr;
+        if      constexpr (std::is_same_v<T, reconduits::Setup<Message>>)  return create(msg, a, b);
+        else if constexpr (std::is_same_v<T, reconduits::Release<Message>>) return clean(msg, a, b);
+        else {
+            getLogger()->warn("Useless message type has reached this[{:p}] ConnectionFactory", static_cast<const void*>(this));
+            return nullptr;
+        }
     }
 
 private:
 
     reconduits::Conduit* create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b);
-    void clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b);
+    reconduits::Conduit* clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b);
 };
 
 }

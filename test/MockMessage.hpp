@@ -4,6 +4,7 @@
 #include "MockLogger.hpp"
 
 #include <chrono>
+#include <iostream>
 
 namespace mock_conduits {
 
@@ -25,10 +26,15 @@ public:
 
     void append(const std::string& s)
     {
-        msg_ += "\n\t" + s;
+        msg_ += s + "\n";
     }
 
 private:
+
+    friend std::ostream& operator<<(std::ostream& o, const Message& m)
+    {
+        return o << "---- \n" << m.msg_ << "----\n";
+    }
 
     std::string msg_;
     int id_;

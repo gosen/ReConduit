@@ -1,6 +1,7 @@
 #pragma once
 
 #include <variant>
+#include <type_traits>
 #include <cstdint>
 #include <tuple>
 
@@ -8,6 +9,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#define DISPACHER_INVOKER(VARIANT, FUNC, ARGS...) \
+    std::visit([](auto&& header) { return header.FUNC( ARGS ); }, VARIANT)
+
+#if 0
+#define DISPACHER_INVOKER_FOR(TYPE, VARIANT, FUNC, ARGS...) \
+    std::visit([](auto&& header) { \
+        using T = std::decay_t<decltype(header)>; \
+        if constexpr ( std::is_same_v<T, TYPE> ) return header.FUNC( ARGS ); }, VARIANT);
+#endif
 
 namespace mock_packet {
 
@@ -79,30 +89,58 @@ private:
 
 class TCPHeader
 {
+    using flags_type = std::tuple<bool, bool, bool>;
+
 public:
-    TCPHeader(uint16_t src, uint16_t dst)
+
+    TCPHeader(uint16_t src, uint16_t dst, flags_type f)
         : src_{ htons( src ) }
         , dst_{ htons( dst ) }
+        , flags_{ f }
     {}
 
     auto get_src_port() const { return src_; }
     auto get_dst_port() const { return dst_; }
 
+    bool is_ack() const { return std::get<0>( flags_ ); }
+    bool is_syn() const { return std::get<1>( flags_ ); }
+    bool is_fin() const { return std::get<2>( flags_ ); }
+
+    static auto set_syn_flag()      { return std::tuple{false, true, false}; }
+    static auto set_ack_flag()      { return std::tuple{true,  false, false}; }
+    static auto set_syn_ack_flags() { return std::tuple{true,  true,  false}; }
+    static auto set_fin_ack_flags() { return std::tuple{true,  false, true}; }
+
 private:
     uint16_t src_;
     uint16_t dst_;
+    flags_type flags_;
 };
 
 class HTTPHeader
 {
 public:
+    explicit HTTPHeader(std::string_view url)
+        : url_{ url }
+    {}
+
+    auto get_url() const  { return url_; }
+
 private:
+    std::string url_;
 };
 
 class TLSHeader
 {
 public:
+    explicit TLSHeader(std::string_view server_name_idication)
+        : sni_{ server_name_idication }
+    {}
+
+    const auto& get_server_name_idication() const  { return sni_; }
+
 private:
+    std::string sni_;
 };
 
 class Packet
@@ -110,63 +148,35 @@ class Packet
 public:
     using network_type     = std::variant<IPv4Header, IPv6Header>;
     using transport_type   = std::variant<UDPHeader, TCPHeader>;
-    using application_type = std::variant<HTTPHeader, TLSHeader>;
+    using application_type = std::variant<std::monostate, HTTPHeader, TLSHeader>;
 
-    Packet(const auto& network, const auto& transport, const auto& app)
+    Packet(const auto& network, const auto& transport, const auto& app = application_type{})
         : network_{ network }
         , transport_{ transport }
         , application_{ app }
     {}
 
-    Packet(auto&& network, auto&& transport, auto&& app)
+    Packet(auto&& network, auto&& transport, auto&& app = application_type{})
         : network_{ std::move( network ) }
         , transport_{ std::move( transport ) }
         , application_{ std::move( app ) }
     {}
 
-    auto get_proto() const
-    {
-        ProtocolType proto; 
-        auto get_proto_info = [ &proto ](auto&& header) { proto = header.get_proto(); };
-        dispatch(network_, get_proto_info);
-        return proto;
-    }
+    auto get_proto()    const { return DISPACHER_INVOKER(network_, get_proto); }
+    auto get_src_addr() const { return DISPACHER_INVOKER(network_, get_src_addr); }
+    auto get_dst_addr() const { return DISPACHER_INVOKER(network_, get_dst_addr); }
 
-    auto get_src_addr() const
-    {
-        in_addr_t addr; 
-        auto get_addr_info = [ &addr ](auto&& header) { addr = header.get_src_addr(); };
-        dispatch(network_, get_addr_info);
-        return addr;
-    }
+    auto get_src_port() const { return DISPACHER_INVOKER(transport_, get_src_port); }
+    auto get_dst_port() const { return DISPACHER_INVOKER(transport_, get_dst_port); }
 
-    auto get_dst_addr() const
-    {
-        in_addr_t addr; 
-        auto get_addr_info = [ &addr ](auto&& header) { addr = header.get_dst_addr(); };
-        dispatch(network_, get_addr_info);
-        return addr;
-    }
-
-    auto get_src_port() const
-    {
-        uint16_t port;
-        auto get_port_info = [ &port ](auto&& header) { port = header.get_src_port(); };
-        dispatch(transport_, get_port_info);
-        return port;
-    }
-
-    auto get_dst_port() const
-    {
-        uint16_t port;
-        auto get_port_info = [ &port ](auto&& header) { port = header.get_dst_port(); };
-        dispatch(transport_, get_port_info);
-        return port;
-    }
+    template<typename T>
+    const auto& get_app_proto() const { return std::get<T>( application_ ); }
 
 private:
-    template<typename V>
-    constexpr void dispatch(V v, auto&& f) const { std::visit([ &f ](auto&& p) { f( p ); }, v); }
+
+//    auto dispacher(auto&& v, auto&& func, auto&&... args) { 
+//        return std::visit([](auto&& header) { return header.func( std::forward< decltype(args)>( args)... ); }, v)
+//    }
 
     network_type     network_;
     transport_type   transport_;

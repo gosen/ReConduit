@@ -77,34 +77,28 @@ private:
         SPDLOG_DEBUG(getLogger(), "Mux Conduit [{:p}] with [a,b0] -> [{:p}, {:p}] accepts a new message.",
                 static_cast<void*>(this), static_cast<void*>(conduit_to_side_a_), static_cast<void*>(conduit_to_side_b0_));
         auto accept = [](auto&& mux_ptr, auto&& msg_ptr) { return mux_ptr->accept( *msg_ptr ); };
-        switch( doubleDispatch_r(mux_, v_msg, accept) ) {
-            case NextSide::a:  return conduit_to_side_a_;
-            case NextSide::b0: return conduit_to_side_b0_;
-            default: return accept_default(v_msg, ctx_conduit);
+        auto [ next, next_v_msg ] = doubleDispatch_r(mux_, v_msg, accept);
+        switch( next ) {
+            case NextSide::a:  return std::pair{ conduit_to_side_a_, next_v_msg };
+            case NextSide::b0: return std::pair{ conduit_to_side_b0_, next_v_msg };
+            default:           return selectConduitSideB(v_msg, ctx_conduit);
         }
     }
 
-    constexpr auto accept_default(auto&& v_msg, Conduit* ctx_conduit)
+    constexpr auto selectConduitSideB(auto&& v_msg, Conduit* ctx_conduit)
     {
-        auto find = [](auto&& mux_ptr, auto&& msg_ptr)
-        {
-            return mux_ptr->find( *msg_ptr );
-        };
-        auto [next_conduit, found] = doubleDispatch_r(mux_, v_msg, find);
-        if( ! found ) {
+        auto find = [](auto&& mux_ptr, auto&& msg_ptr) { return mux_ptr->find( *msg_ptr ); };
+        if( auto [next_conduit, found] = doubleDispatch_r(mux_, v_msg, find); found ) {
+            SPDLOG_DEBUG(getLogger(), "Mux Conduit [{:p}] with [a,b] -> [{:p}, {:p}] is routing this message.",
+                    static_cast<void*>(this), static_cast<void*>(conduit_to_side_a_), static_cast<void*>(next_conduit));
+            return std::pair{ next_conduit, v_msg };
+        } else {
             SPDLOG_DEBUG(getLogger(), "Mux Conduit [{:p}] with [a,b0] -> [{:p}, {:p}] needs new route to be created.",
                 static_cast<void*>(this), static_cast<void*>(conduit_to_side_a_), static_cast<void*>(conduit_to_side_b0_));
-            auto create = [ & ](auto&& mux_ptr, auto&& msg_ptr)
-            {
-                auto setup_msg = mux_ptr->create(ctx_conduit, *msg_ptr);
-                this->conduit_to_side_b0_->accept( setup_msg );
-                next_conduit = nullptr;
-            };
-            doubleDispatch(mux_, v_msg, create);
+            auto setup = [ & ](auto&& mux_ptr, auto&& msg_ptr) { return mux_ptr->setup(*msg_ptr, ctx_conduit); };
+            auto setup_v_msg = doubleDispatch_r(mux_, v_msg, setup);
+            return std::pair{ conduit_to_side_b0_, setup_v_msg };
         }
-        SPDLOG_DEBUG(getLogger(), "Mux Conduit [{:p}] with [a,b] -> [{:p}, {:p}] is routing this message.",
-                static_cast<void*>(this), static_cast<void*>(conduit_to_side_a_), static_cast<void*>(next_conduit));
-        return next_conduit;
     }
 
     Conduit* conduit_to_side_a_;

@@ -23,17 +23,17 @@ struct NetworkAdapter
     {
         auto& emsg = msg.get();
         emsg.append( "NetworkAdapter" );
-        return emsg.isUpLink() ? reconduits::NextSide::a : reconduits::NextSide::done;
+        return std::pair{ reconduits::NextSide::a, make_variant_message( msg ) };
     }
 };
 
-struct ApplicationAdapter
+struct EndPointAdapter
 {
     constexpr auto accept(auto&& msg)
     {
         auto& emsg = msg.get();
-        emsg.append( "ApplicationAdapter" );
-        return ! emsg.isUpLink() ? reconduits::NextSide::a : reconduits::NextSide::done;
+        emsg.append( "EndPointAdapter" );
+        return std::pair{ reconduits::NextSide::done, make_variant_message( msg ) };
     }
 };
 

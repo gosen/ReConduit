@@ -23,6 +23,11 @@ public:
         return getFromPool<sizeof(Alerting)>();
     }
 
+    static void* operator new(std::size_t sz, Alerting* p)
+    {
+        return ::operator new(sz, p);
+    }
+
     static void operator delete(void* p)
     {
         putToPool<sizeof(Alerting)>( p );
