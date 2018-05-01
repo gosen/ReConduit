@@ -77,20 +77,36 @@ TEST(ConduitTest, MockDPIexample) {
     network_factory.setSideB( endpoint_adapter );
 
     using namespace mock_packet;
-    Packet packet {
+    Packet tcp_packet {
         IPv4Header{ "10.11.12.13", "200.100.90.80", ProtocolType::tcp },
         TCPHeader{ 55000, 80, TCPHeader::set_ack_flag() },
         HTTPHeader{ "http://www.recoduit.cxm/" }};
 
-    EXPECT_EQ(ntohs( packet.get_src_port() ), 55000);
-    EXPECT_EQ(ntohs( packet.get_dst_port() ), 80);
-    EXPECT_EQ(packet.get_app_proto<HTTPHeader>().get_url(), "http://www.recoduit.cxm/");
+    EXPECT_EQ(ntohs( tcp_packet.get_src_port() ), 55000);
+    EXPECT_EQ(ntohs( tcp_packet.get_dst_port() ), 80);
+    EXPECT_EQ(tcp_packet.get_app_proto<HTTPHeader>().get_url(), "http://www.recoduit.cxm/");
 
     auto now = chrono::system_clock::now();
-    Message msg{now, packet, true};
-    network_adapter.accept( InformationChunk<Message>{ msg } );
-    network_adapter.accept( Release<Message>{msg, &network_adapter} );
+    Message tcp_msg{now, tcp_packet, true};
+    network_adapter.accept( InformationChunk<Message>{ tcp_msg } );
+    network_adapter.accept( Release<Message>{tcp_msg, &network_adapter} );
 
-    std::cout << msg;
+    std::cout << tcp_msg;
+
+    Packet udp_packet {
+        IPv4Header{ "10.11.12.13", "200.100.90.80", ProtocolType::udp },
+        UDPHeader{ 55000, 80 },
+        DNSHeader{ "www.recoduit.cxm" }};
+
+    EXPECT_EQ(ntohs( udp_packet.get_src_port() ), 55000);
+    EXPECT_EQ(ntohs( udp_packet.get_dst_port() ), 80);
+    EXPECT_EQ(udp_packet.get_app_proto<DNSHeader>().get_uri(), "www.recoduit.cxm");
+
+    now = chrono::system_clock::now();
+    Message udp_msg{now, udp_packet, true};
+    network_adapter.accept( InformationChunk<Message>{ udp_msg } );
+    network_adapter.accept( Release<Message>{udp_msg, &network_adapter} );
+
+    std::cout << udp_msg;
 }
 

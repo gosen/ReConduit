@@ -125,7 +125,7 @@ public:
     auto erase(auto&& key)
     {
         SPDLOG_DEBUG(getLogger(), "L4Mux [{:p}] is going to release connected conduits.", static_cast<void*>(this));
-        auto it = mux_table_.find( std::get<uint16_t>( key ) );
+        auto it = mux_table_.find( std::get<mock_packet::Packet::l4_id_type>( key ) );
         if( it != mux_table_.cend() ) {
             mux_table_.erase( it );
             return it->second;
@@ -149,7 +149,7 @@ public:
         auto& emsg = msg.get();
         lua.set_function("append", [ & ]{ emsg.append( "L4LUAMux" ); });
         lua.script("append()");
-        return std::pair{ (emsg.isUpLink() ? NextSide::b : NextSide::a), make_variant_message( msg ) };
+        return std::pair{ NextSide::b, make_variant_message( msg ) };
     }
 
 private:

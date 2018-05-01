@@ -143,12 +143,25 @@ private:
     std::string sni_;
 };
 
+class DNSHeader
+{
+public:
+    explicit DNSHeader(std::string_view uri)
+        : uri_{ uri }
+    {}
+
+    auto get_uri() const  { return uri_; }
+
+private:
+    std::string uri_;
+};
+
 class Packet
 {
 public:
     using network_type     = std::variant<IPv4Header, IPv6Header>;
     using transport_type   = std::variant<UDPHeader, TCPHeader>;
-    using application_type = std::variant<std::monostate, HTTPHeader, TLSHeader>;
+    using application_type = std::variant<std::monostate, HTTPHeader, TLSHeader, DNSHeader>;
 
     using l3_id_type = ProtocolType;
     using l4_id_type = uint16_t;

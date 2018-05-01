@@ -6,20 +6,46 @@ namespace mock_conduits {
 // Factories definitions
 //////////////////////////////////////
 
-reconduits::Conduit* NetworkFactory::tcp(reconduits::Conduit* b) const
+reconduits::Conduit* NetworkFactory::create_tcp_connection(reconduits::Setup<Message>& msg, reconduits::Conduit*a, reconduits::Conduit* b) const
 {
     using namespace reconduits;
-    auto tcp = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ TCPProtocol{} } };
-    tcp->setSideB( *b );
-    return tcp;
+    auto tcp_parser        = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ TCPProtocol{} } };
+    auto l4_mux            = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Mux{ L4Mux{} } };
+    auto connection_factoy = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Factory{ ConnectionFactory{} } };
+
+    tcp_parser->setSideB( *l4_mux );
+    l4_mux->setSideB( *connection_factoy );
+
+    connection_factoy->setSideA( *l4_mux );
+    connection_factoy->setSideB( *b );
+
+    auto& emsg = msg.get();
+    emsg.append( "NetworkFactory: Setup TCP connection" );
+
+    auto key = emsg.getL3Id();
+    a->insertInSideB(key, *tcp_parser);
+    return tcp_parser;
 }
 
-reconduits::Conduit* NetworkFactory::udp(reconduits::Conduit* b) const
+reconduits::Conduit* NetworkFactory::create_udp_connection(reconduits::Setup<Message>& msg, reconduits::Conduit*a, reconduits::Conduit* b) const
 {
     using namespace reconduits;
-    auto udp = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ UDPProtocol{} } };
-    udp->setSideB( *b );
-    return udp;
+    auto udp_parser        = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ UDPProtocol{} } };
+    auto l4_mux            = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Mux{ L4Mux{} } };
+    auto connection_factoy = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Factory{ ConnectionFactory{} } };
+
+    udp_parser->setSideB( *l4_mux );
+    l4_mux->setSideB( *connection_factoy );
+
+    connection_factoy->setSideA( *l4_mux );
+    connection_factoy->setSideB( *b );
+
+    auto& emsg = msg.get();
+    emsg.append( "NetworkFactory: Setup UDP connection" );
+
+    auto key = emsg.getL3Id();
+    a->insertInSideB(key, *udp_parser);
+    return udp_parser;
 }
 
 reconduits::Conduit* ConnectionFactory::create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
