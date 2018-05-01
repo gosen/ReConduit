@@ -3,6 +3,7 @@
 #include "MockPacket.hpp"
 #include "MockLogger.hpp"
 
+#include <utility>
 #include <chrono>
 #include <iostream>
 
@@ -11,6 +12,8 @@ namespace mock_conduits {
 class Message
 {
 public:
+
+    using key_type = std::variant<mock_packet::Packet::l3_id_type, mock_packet::Packet::l4_id_type>;
 
     Message(
         std::chrono::system_clock::time_point tp,
@@ -21,7 +24,8 @@ public:
         , uplink_{ uplink }
     {}
 
-    constexpr auto getId() const noexcept { return id_; }
+    constexpr auto getL3Id() const noexcept { return key_type{ packet_.get_proto() }; }
+    constexpr auto getL4Id() const noexcept { return key_type{  uplink_ ? packet_.get_src_port() : packet_.get_dst_port() }; }
     constexpr bool isUpLink() const noexcept { return uplink_; }
 
     void append(const std::string& s)
@@ -37,7 +41,6 @@ private:
     }
 
     std::string msg_;
-    int id_;
 
     mock_packet::Packet packet_;
     std::chrono::system_clock::time_point time_stamp_;

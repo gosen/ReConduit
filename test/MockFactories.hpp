@@ -17,6 +17,24 @@ namespace mock_conduits {
 // Factories
 //////////////////////////////////////
 
+class NetworkFactory
+{
+public:
+
+    constexpr reconduits::Conduit* accept(auto&& msg, reconduits::Conduit* a, reconduits::Conduit* b)
+    {
+        switch( std::get<mock_packet::ProtocolType>( msg.get().getL3Id() ) ) {
+            case mock_packet::ProtocolType::tcp: return tcp( b );
+            case mock_packet::ProtocolType::udp: return udp( b );
+            default: return b;
+        }
+    }
+private:
+
+    reconduits::Conduit* tcp(reconduits::Conduit* b) const;
+    reconduits::Conduit* udp(reconduits::Conduit* b) const;
+};
+
 class ConnectionFactory
 {
 public:

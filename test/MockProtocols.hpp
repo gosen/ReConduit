@@ -17,14 +17,14 @@ namespace mock_conduits {
 // Protocols
 //////////////////////////////////////
 
-struct IPProtocol
+struct NetworkProtocol
 {
     constexpr auto accept(auto&& msg, reconduits::Conduit* conduit_origin)
     {
         using namespace reconduits;
         auto& emsg = msg.get();
-        emsg.append( "IPProtocol" );
-        return std::pair{ (emsg.isUpLink() ? NextSide::b : NextSide::a), make_variant_message( msg ) };
+        emsg.append( "NetworkProtocol" );
+        return std::pair{ NextSide::b, make_variant_message( msg ) };
     }
 };
 
@@ -35,7 +35,18 @@ struct TCPProtocol
         using namespace reconduits;
         auto& emsg = msg.get();
         emsg.append( "TCPProtocol" );
-        return std::pair{ (emsg.isUpLink() ? NextSide::b : NextSide::a), make_variant_message( msg ) };
+        return std::pair{ NextSide::b, make_variant_message( msg ) };
+    }
+};
+
+struct UDPProtocol
+{
+    constexpr auto accept(auto&& msg, reconduits::Conduit* conduit_origin)
+    {
+        using namespace reconduits;
+        auto& emsg = msg.get();
+        emsg.append( "UDPProtocol" );
+        return std::pair{ NextSide::b, make_variant_message( msg ) };
     }
 };
 

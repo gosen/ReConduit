@@ -30,20 +30,51 @@ TEST(ConduitTest, MockDPIexample) {
     using namespace reconduits;
     using namespace mock_conduits;
 
-    Conduit a1{ Adapter{ NetworkAdapter{} } }, a2{ Adapter{ EndPointAdapter{} } };
-    Conduit p1{ Protocol{ IPProtocol{} } };
-    Conduit m1{ Mux{ ConnectionsMux{} } };
-    //Conduit m1{ Mux{ ConnectionsLUAMux{} } };
-    Conduit f{ Factory{ ConnectionFactory{} } };
+    /////////////////////////////////////////////////////////////////
+    // Conduits to be used
+    /////////////////////////////////////////////////////////////////
 
-    a1.setSideA( p1 );
+    // Adapters:
+    Conduit network_adapter{ Adapter{ NetworkAdapter{} } };
+    Conduit endpoint_adapter{ Adapter{ EndPointAdapter{} } };
 
-    p1.setSideB( m1 );
+    // Protocols:
+    Conduit network_protocol{ Protocol{ NetworkProtocol{} } };
+//    Conduit transport_protocol{ Protocol{ TransportProtocol{} } };
+//    Conduit udp_protocol{ Protocol{ UDPProtocol{} } };
+//    Conduit tcp_protocol{ Protocol{ TCPProtocol{} } };
+//    Conduit dns_protocol{ Protocol{ DNSProtocol{} } };
+//    Conduit http_protocol{ Protocol{ HTTPProtocol{} } };
 
-    m1.setSideB( f );
+    // Muxes:
+    Conduit l3_mux{ Mux{ L3Mux{} } };
+//    Conduit l4_mux{ Mux{ L4Mux{} } };
+//    Conduit l7_udp_mux{ Mux{ L7Mux{} } };
+//    Conduit l7_tcp_mux{ Mux{ L7Mux{} } };
 
-    f.setSideA( m1 );
-    f.setSideB( a2 );
+    // Factories:
+    Conduit network_factory{ Factory{ NetworkFactory{} } };
+//    Conduit conections_factory{ Factory{ ConnectionFactory{} } };
+//    Conduit application_factory{ Factory{ ApplicationFactory{} } };
+
+    /////////////////////////////////////////////////////////////////
+    // Conduits interconnections
+    /////////////////////////////////////////////////////////////////
+
+
+    //                                                            _____________
+    //                                                           /        [b1] |
+    // | network_adapter [a] | --> | network_protocol [b] | --> | l3_mux  [b2] |
+    //                                                           \_[b0]___[bn]_|
+    //                                                              ^
+    //                                                              |
+    //                                                              +-----> |[a] network_factory [b] | ---> | endpoint_adapter |
+
+    network_adapter.setSideA( network_protocol );
+    network_protocol.setSideB( l3_mux );
+    l3_mux.setSideB( network_factory );
+    network_factory.setSideA( l3_mux );
+    network_factory.setSideB( endpoint_adapter );
 
     using namespace mock_packet;
     Packet packet {
@@ -57,95 +88,9 @@ TEST(ConduitTest, MockDPIexample) {
 
     auto now = chrono::system_clock::now();
     Message msg{now, packet, true};
-    a1.accept( InformationChunk<Message>{ msg } );
-    a1.accept( Release<Message>{msg, &a1} );
+    network_adapter.accept( InformationChunk<Message>{ msg } );
+    network_adapter.accept( Release<Message>{msg, &network_adapter} );
 
     std::cout << msg;
 }
 
-#if 0
-TEST(ConduitTest, MockDPIexample) {
-
-    using namespace std;
-    using namespace reconduits;
-    using namespace mock_conduits;
-
-
-    Conduit a1{ Adapter{ NetworkAdapter{} } }, a2{ Adapter{ ApplicationAdapter{} } };
-    Conduit p1{ Protocol{ IPProtocol{} } };
-    Conduit m1{ Mux{ ConnectionsLUAMux{} } }, m2{ Mux{ ConnectionsMux{} } };
-    Conduit f{ Factory{ ConnectionFactory{} } };
-
-    a1.setSideA( p1 );
-
-    p1.setSideA( a1 );
-    p1.setSideB( m1 );
-
-    m1.setSideA( p1 );
-    m1.setSideB( f );
-
-    f.setSideA( m1 );
-    f.setSideB( m2 );
-
-    m2.setSideA( a2 );
-    m2.setSideB( f );
-
-    a2.setSideA( m2 );
-
-    using namespace mock_packet;
-    Packet packet {
-        IPv4Header{ "10.11.12.13", "200.100.90.80", ProtocolType::tcp },
-        TCPHeader{ 55000, 80, TCPHeader::set_ack_flag() },
-        HTTPHeader{ "http://www.recoduit.cxm/" }};
-
-    EXPECT_EQ(ntohs( packet.get_src_port() ), 55000);
-    EXPECT_EQ(ntohs( packet.get_dst_port() ), 80);
-    EXPECT_EQ(packet.get_app_proto<HTTPHeader>().get_url(), "http://www.recoduit.cxm/");
-
-    auto now = chrono::system_clock::now();
-    Message msg{now, packet, true};
-    a1.accept( InformationChunk<Message>{ msg } );
-}
-
-TEST(ConduitTest, MockDPI) {
-
-    using namespace std;
-    using namespace reconduits;
-    using namespace mock_conduits;
-
-    Conduit a1{ Adapter{ NetworkAdapter{} } }, a2{ Adapter{ ApplicationAdapter{} } };
-    Conduit p1{ Protocol{ IPProtocol{} } };
-    Conduit m1{ Mux{ ConnectionsLUAMux{} } }, m2{ Mux{ ConnectionsMux{} } };
-    Conduit f{ Factory{ TCPConnectionFactory{} } };
-
-    a1.setSideA( p1 );
-
-    p1.setSideA( a1 );
-    p1.setSideB( m1 );
-
-    m1.setSideA( p1 );
-    m1.setSideB( f );
-
-    f.setSideA( m1 );
-    f.setSideB( m2 );
-
-    m2.setSideA( a2 );
-    m2.setSideB( f );
-
-    a2.setSideA( m2 );
-
-    using namespace mock_packet;
-    Packet packet {
-        IPv4Header{ "10.11.12.13", "200.100.90.80", ProtocolType::tcp },
-        TCPHeader{ 55000, 80, TCPHeader::set_ack_flag() },
-        HTTPHeader{ "http://www.recoduit.cxm/" }};
-
-    EXPECT_EQ(ntohs( packet.get_src_port() ), 55000);
-    EXPECT_EQ(ntohs( packet.get_dst_port() ), 80);
-    EXPECT_EQ(packet.get_app_proto<HTTPHeader>().get_url(), "http://www.recoduit.cxm/");
-
-    auto now = chrono::system_clock::now();
-    Message msg{now, packet, true};
-    a1.accept( InformationChunk<Message>{ msg } );
-}
-#endif

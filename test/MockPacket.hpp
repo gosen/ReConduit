@@ -32,9 +32,9 @@ public:
         , proto_{ proto }
     {}
 
-    auto get_src_addr() const { return src_; }
-    auto get_dst_addr() const { return dst_; }
-    auto get_proto() const { return proto_; }
+    auto get_src_addr() const noexcept { return src_; }
+    auto get_dst_addr() const noexcept { return dst_; }
+    auto get_proto() const noexcept { return proto_; }
 
 private:
     in_addr_t src_;
@@ -51,9 +51,9 @@ public:
         , proto_{ proto }
     {}
 
-    auto get_src_addr() const { return src_.s6_addr32[0]; }
-    auto get_dst_addr() const { return dst_.s6_addr32[0]; }
-    auto get_proto() const { return proto_; }
+    auto get_src_addr() const noexcept { return src_.s6_addr32[0]; }
+    auto get_dst_addr() const noexcept { return dst_.s6_addr32[0]; }
+    auto get_proto() const noexcept { return proto_; }
 
 private:
     auto convert_2_number(const char* addr) const -> in6_addr
@@ -79,8 +79,8 @@ public:
         , dst_{ htons( dst ) }
     {}
 
-    auto get_src_port() const { return src_; }
-    auto get_dst_port() const { return dst_; }
+    auto get_src_port() const noexcept { return src_; }
+    auto get_dst_port() const noexcept { return dst_; }
 
 private:
     uint16_t src_;
@@ -99,8 +99,8 @@ public:
         , flags_{ f }
     {}
 
-    auto get_src_port() const { return src_; }
-    auto get_dst_port() const { return dst_; }
+    auto get_src_port() const noexcept { return src_; }
+    auto get_dst_port() const noexcept { return dst_; }
 
     bool is_ack() const { return std::get<0>( flags_ ); }
     bool is_syn() const { return std::get<1>( flags_ ); }
@@ -150,6 +150,9 @@ public:
     using transport_type   = std::variant<UDPHeader, TCPHeader>;
     using application_type = std::variant<std::monostate, HTTPHeader, TLSHeader>;
 
+    using l3_id_type = ProtocolType;
+    using l4_id_type = uint16_t;
+
     Packet(const auto& network, const auto& transport, const auto& app = application_type{})
         : network_{ network }
         , transport_{ transport }
@@ -162,19 +165,19 @@ public:
         , application_{ std::move( app ) }
     {}
 
-    auto get_proto()    const { return DISPACHER_INVOKER(network_, get_proto); }
-    auto get_src_addr() const { return DISPACHER_INVOKER(network_, get_src_addr); }
-    auto get_dst_addr() const { return DISPACHER_INVOKER(network_, get_dst_addr); }
+    constexpr auto get_proto()    const { return DISPACHER_INVOKER(network_, get_proto); }
+    constexpr auto get_src_addr() const { return DISPACHER_INVOKER(network_, get_src_addr); }
+    constexpr auto get_dst_addr() const { return DISPACHER_INVOKER(network_, get_dst_addr); }
 
-    auto get_src_port() const { return DISPACHER_INVOKER(transport_, get_src_port); }
-    auto get_dst_port() const { return DISPACHER_INVOKER(transport_, get_dst_port); }
+    constexpr auto get_src_port() const { return DISPACHER_INVOKER(transport_, get_src_port); }
+    constexpr auto get_dst_port() const { return DISPACHER_INVOKER(transport_, get_dst_port); }
 
     template<typename T>
     const auto& get_app_proto() const { return std::get<T>( application_ ); }
 
 private:
 
-//    auto dispacher(auto&& v, auto&& func, auto&&... args) { 
+//    auto dispacher(auto&& v, auto&& func, auto&&... args) {
 //        return std::visit([](auto&& header) { return header.func( std::forward< decltype(args)>( args)... ); }, v)
 //    }
 
