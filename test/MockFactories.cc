@@ -11,7 +11,7 @@ reconduits::Conduit* NetworkFactory::create_tcp_connection(reconduits::Setup<Mes
     using namespace reconduits;
     auto tcp_parser        = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ TCPProtocol{} } };
     auto l4_mux            = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Mux{ L4Mux{} } };
-    auto connection_factoy = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Factory{ ConnectionFactory{} } };
+    auto connection_factoy = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Factory{ TCPConnectionFactory{} } };
 
     tcp_parser->setSideB( *l4_mux );
     l4_mux->setSideB( *connection_factoy );
@@ -32,7 +32,7 @@ reconduits::Conduit* NetworkFactory::create_udp_connection(reconduits::Setup<Mes
     using namespace reconduits;
     auto udp_parser        = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ UDPProtocol{} } };
     auto l4_mux            = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Mux{ L4Mux{} } };
-    auto connection_factoy = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Factory{ ConnectionFactory{} } };
+    auto connection_factoy = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Factory{ UDPConnectionFactory{} } };
 
     udp_parser->setSideB( *l4_mux );
     l4_mux->setSideB( *connection_factoy );
@@ -48,33 +48,53 @@ reconduits::Conduit* NetworkFactory::create_udp_connection(reconduits::Setup<Mes
     return udp_parser;
 }
 
-reconduits::Conduit* ConnectionFactory::create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
+reconduits::Conduit* TCPConnectionFactory::create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
 {
     using namespace reconduits;
-    auto& p2 = *new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ TCPProtocol{} } };
-    auto& p3 = *new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ HTTPProtocol{} } };
+    auto http_parser = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ HTTPProtocol{} } };
 
-    p2.setSideA( *a );
-    p2.setSideB( p3 );
-
-    p3.setSideA( p2 );
-    p3.setSideB( *b );
+    http_parser->setSideB( *b );
 
     auto& emsg = msg.get();
-    emsg.append( "ConnectionFactory: Setup" );
+    emsg.append( "ConnectionFactory: Setup HTTP connection" );
 
     auto key = emsg.getL4Id();
-    return a->insertInSideB(key, p2) ? &p2 : nullptr;
+    a->insertInSideB(key, *http_parser);
+    return http_parser;
 }
 
-reconduits::Conduit* ConnectionFactory::clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
+reconduits::Conduit* TCPConnectionFactory::clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
 {
     auto& emsg = msg.get();
-    emsg.append( "ConnectionFactory: Release" );
+    emsg.append( "ConnectionFactory: Release HTTP connection" );
     auto key = emsg.getL4Id();
     using namespace reconduits;
     putToPool<sizeof(Conduit)>( a->eraseFromSideB( key ) );
-    putToPool<sizeof(Conduit)>( b->eraseFromSideB( key ) );
+    return b;
+}
+
+reconduits::Conduit* UDPConnectionFactory::create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
+{
+    using namespace reconduits;
+    auto dns_parser = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ DNSProtocol{} } };
+
+    dns_parser->setSideB( *b );
+
+    auto& emsg = msg.get();
+    emsg.append( "ConnectionFactory: Setup DNS connection" );
+
+    auto key = emsg.getL4Id();
+    a->insertInSideB(key, *dns_parser);
+    return dns_parser;
+}
+
+reconduits::Conduit* UDPConnectionFactory::clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
+{
+    auto& emsg = msg.get();
+    emsg.append( "ConnectionFactory: Release DNS connection" );
+    auto key = emsg.getL4Id();
+    using namespace reconduits;
+    putToPool<sizeof(Conduit)>( a->eraseFromSideB( key ) );
     return b;
 }
 

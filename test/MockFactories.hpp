@@ -44,22 +44,36 @@ private:
     reconduits::Conduit* create_udp_connection(reconduits::Setup<Message>& msg, reconduits::Conduit*a, reconduits::Conduit* b) const;
 };
 
-class ConnectionFactory
+template<typename D>
+struct ConnectionFactory
 {
-public:
-
     constexpr reconduits::Conduit* accept(auto&& msg, reconduits::Conduit* a, reconduits::Conduit* b)
     {
         using T = std::decay_t<decltype(msg)>;
-        if      constexpr (std::is_same_v<T, reconduits::Setup<Message>>)  return create(msg, a, b);
-        else if constexpr (std::is_same_v<T, reconduits::Release<Message>>) return clean(msg, a, b);
+        if      constexpr (std::is_same_v<T, reconduits::Setup<Message>>)  return static_cast<D*>( this )->create(msg, a, b);
+        else if constexpr (std::is_same_v<T, reconduits::Release<Message>>) return static_cast<D*>( this )->clean(msg, a, b);
         else {
             getLogger()->warn("Useless message type has reached this[{:p}] ConnectionFactory", static_cast<const void*>(this));
             return nullptr;
         }
     }
+};
 
+class TCPConnectionFactory : public ConnectionFactory<TCPConnectionFactory>
+{
 private:
+
+    friend ConnectionFactory<TCPConnectionFactory>;
+
+    reconduits::Conduit* create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b);
+    reconduits::Conduit* clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b);
+};
+
+class UDPConnectionFactory : public ConnectionFactory<UDPConnectionFactory>
+{
+private:
+
+    friend ConnectionFactory<UDPConnectionFactory>;
 
     reconduits::Conduit* create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b);
     reconduits::Conduit* clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b);

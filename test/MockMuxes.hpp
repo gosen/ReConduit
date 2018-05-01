@@ -39,7 +39,7 @@ public:
             case mock_packet::ProtocolType::tcp:
                 return std::pair{ tcp_protocol_, tcp_protocol_ != nullptr };
             case mock_packet::ProtocolType::udp:
-                return std::pair{ tcp_protocol_, udp_protocol_ != nullptr };
+                return std::pair{ udp_protocol_, udp_protocol_ != nullptr };
             default:
                 return std::pair{ static_cast<reconduits::Conduit*>( nullptr ), false };
         }

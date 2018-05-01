@@ -61,4 +61,14 @@ struct HTTPProtocol
     }
 };
 
+struct DNSProtocol
+{
+    constexpr auto accept(auto&& msg, reconduits::Conduit* conduit_origin)
+    {
+        using namespace reconduits;
+        auto& emsg = msg.get();
+        emsg.append( "DNSProtocol" );
+        return std::pair{ NextSide::b, make_variant_release_message(msg, conduit_origin) };
+    }
+};
 }
