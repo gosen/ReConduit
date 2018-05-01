@@ -79,7 +79,7 @@ class L4Mux
 {
 public:
 
-    using key_type   = typename Message::key_type;
+    using key_type   = typename mock_packet::Packet::l4_id_type;
     using value_type = reconduits::Conduit*;
 
     constexpr auto accept(auto&& msg)
@@ -149,7 +149,11 @@ public:
         auto& emsg = msg.get();
         lua.set_function("append", [ & ]{ emsg.append( "L4LUAMux" ); });
         lua.script("append()");
-        return std::pair{ NextSide::b, make_variant_message( msg ) };
+        using T = std::decay_t<decltype(msg)>;
+        if constexpr (std::is_same_v<T, reconduits::Release<Message>>)
+            return std::pair{ NextSide::b0, make_variant_message( msg ) };
+        else
+            return std::pair{ NextSide::b,  make_variant_message( msg ) };
     }
 
 private:

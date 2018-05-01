@@ -8,9 +8,17 @@ namespace mock_conduits {
 
 reconduits::Conduit* NetworkFactory::create_tcp_connection(reconduits::Setup<Message>& msg, reconduits::Conduit*a, reconduits::Conduit* b) const
 {
+    //   ___________                              _____________
+    //  /           |                            /        [b1] |
+    // | l3_mux [bi]| --> | tcp_parser [b]| --> | l4_mux  [b2] |
+    //  \___________|                            \_[b0]___[bn]_|
+    //                                               ^
+    //                                               |
+    //                                               +-> |[a] connection_factoy [b]| --> | endpoint_adapter |
+
     using namespace reconduits;
     auto tcp_parser        = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ TCPProtocol{} } };
-    auto l4_mux            = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Mux{ L4Mux{} } };
+    auto l4_mux            = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Mux{ L4LUAMux{} } };
     auto connection_factoy = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Factory{ TCPConnectionFactory{} } };
 
     tcp_parser->setSideB( *l4_mux );
@@ -29,6 +37,14 @@ reconduits::Conduit* NetworkFactory::create_tcp_connection(reconduits::Setup<Mes
 
 reconduits::Conduit* NetworkFactory::create_udp_connection(reconduits::Setup<Message>& msg, reconduits::Conduit*a, reconduits::Conduit* b) const
 {
+    //   ___________                              _____________
+    //  /           |                            /        [b1] |
+    // | l3_mux [bi]| --> | udp_parser [b]| --> | l4_mux  [b2] |
+    //  \___________|                            \_[b0]___[bn]_|
+    //                                               ^
+    //                                               |
+    //                                               +-> |[a] connection_factoy [b]| --> | endpoint_adapter |
+
     using namespace reconduits;
     auto udp_parser        = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ UDPProtocol{} } };
     auto l4_mux            = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Mux{ L4Mux{} } };
@@ -50,6 +66,11 @@ reconduits::Conduit* NetworkFactory::create_udp_connection(reconduits::Setup<Mes
 
 reconduits::Conduit* TCPConnectionFactory::create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
 {
+    //   ___________
+    //  /           |
+    // | l4_mux [bi]| --> | http_parser [b]| --> | endpoint_adapter |
+    //  \___________|
+
     using namespace reconduits;
     auto http_parser = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ HTTPProtocol{} } };
 
@@ -75,6 +96,11 @@ reconduits::Conduit* TCPConnectionFactory::clean(reconduits::Release<Message>& m
 
 reconduits::Conduit* UDPConnectionFactory::create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
 {
+    //   ___________
+    //  /           |
+    // | l4_mux [bi]| --> | dns_parser [b]| --> | endpoint_adapter |
+    //  \___________|
+
     using namespace reconduits;
     auto dns_parser = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ DNSProtocol{} } };
 

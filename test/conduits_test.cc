@@ -40,27 +40,16 @@ TEST(ConduitTest, MockDPIexample) {
 
     // Protocols:
     Conduit network_protocol{ Protocol{ NetworkProtocol{} } };
-//    Conduit transport_protocol{ Protocol{ TransportProtocol{} } };
-//    Conduit udp_protocol{ Protocol{ UDPProtocol{} } };
-//    Conduit tcp_protocol{ Protocol{ TCPProtocol{} } };
-//    Conduit dns_protocol{ Protocol{ DNSProtocol{} } };
-//    Conduit http_protocol{ Protocol{ HTTPProtocol{} } };
 
     // Muxes:
     Conduit l3_mux{ Mux{ L3Mux{} } };
-//    Conduit l4_mux{ Mux{ L4Mux{} } };
-//    Conduit l7_udp_mux{ Mux{ L7Mux{} } };
-//    Conduit l7_tcp_mux{ Mux{ L7Mux{} } };
 
     // Factories:
     Conduit network_factory{ Factory{ NetworkFactory{} } };
-//    Conduit conections_factory{ Factory{ ConnectionFactory{} } };
-//    Conduit application_factory{ Factory{ ApplicationFactory{} } };
 
     /////////////////////////////////////////////////////////////////
     // Conduits interconnections
     /////////////////////////////////////////////////////////////////
-
 
     //                                                            _____________
     //                                                           /        [b1] |

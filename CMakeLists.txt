@@ -64,7 +64,7 @@ include_directories(${source_dir}/include)
 # (Sol is a C++ library binding to Lua)
 
 ExternalProject_Add(sol2
-  URL https://github.com/ThePhD/sol2/archive/v2.19.4.tar.gz
+  URL https://github.com/ThePhD/sol2/archive/v2.20.0.tar.gz
 
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/sol2
   INSTALL_COMMAND ""
