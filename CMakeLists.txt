@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6.0)
-project(furianDPI CXX)
+project(ReConduit CXX)
 #set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_CXX_FLAGS "-std=c++1z -O3 -Wall")
 set(CMAKE_BUILD_TYPE Debug)

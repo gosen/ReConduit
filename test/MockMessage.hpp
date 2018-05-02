@@ -22,11 +22,17 @@ public:
         : packet_{ pkt }
         , time_stamp_{ tp }
         , uplink_{ uplink }
+        , established_{}
     {}
 
     constexpr auto getL3Id() const noexcept { return key_type{ packet_.get_proto() }; }
     constexpr auto getL4Id() const noexcept { return key_type{  uplink_ ? packet_.get_src_port() : packet_.get_dst_port() }; }
     constexpr bool isUpLink() const noexcept { return uplink_; }
+    
+    const auto& packet() const { return packet_; }     
+
+    bool connection_established() const { return established_; }
+    void set_connection_established() { established_ = true; }
 
     void append(const std::string& s)
     {
@@ -37,7 +43,7 @@ private:
 
     friend std::ostream& operator<<(std::ostream& o, const Message& m)
     {
-        return o << "---- \n" << m.msg_ << "----\n";
+        return o << "Message transist:\n-----------\n" << m.msg_ << "\n\n";
     }
 
     std::string msg_;
@@ -45,6 +51,7 @@ private:
     mock_packet::Packet packet_;
     std::chrono::system_clock::time_point time_stamp_;
     bool uplink_;
+    bool established_;
 };
 
 }

@@ -65,22 +65,85 @@ TEST(ConduitTest, MockDPIexample) {
     network_factory.setSideA( l3_mux );
     network_factory.setSideB( endpoint_adapter );
 
+    // TCP connection example
+
     using namespace mock_packet;
-    Packet tcp_packet {
-        IPv4Header{ "10.11.12.13", "200.100.90.80", ProtocolType::tcp },
-        TCPHeader{ 55000, 80, TCPHeader::set_ack_flag() },
-        HTTPHeader{ "http://www.recoduit.cxm/" }};
+    const Packet tcp_packets[] = {
+    // tcp_packets[1] > SYN
+        {
+          IPv4Header{ "10.11.12.13", "200.100.90.80", ProtocolType::tcp }, // Up
+          TCPHeader{ 55000, 80, TCPHeader::set_syn_flag() }
+        },
+    // tcp_packets[2] < SYN_ACK
+        {
+          IPv4Header{ "200.100.90.80", "10.11.12.13", ProtocolType::tcp }, // Down
+          TCPHeader{ 80, 55000, TCPHeader::set_syn_ack_flags() }
+        },
+    // tcp_packets[3] > ACK
+        {
+          IPv4Header{ "10.11.12.13", "200.100.90.80", ProtocolType::tcp }, // Up
+          TCPHeader{ 55000, 80, TCPHeader::set_ack_flag() }
+        },
+    // tcp_packets[4] > ACK [ GET URL ]
+        {
+          IPv4Header{ "10.11.12.13", "200.100.90.80", ProtocolType::tcp }, // Up
+          TCPHeader{ 55000, 80, TCPHeader::set_ack_flag() },
+          HTTPHeader{ "http://www.recoduit.cxm/" }
+        },
+    // tcp_packets[5] < ACK [ 200 OK ]
+        {
+          IPv4Header{ "200.100.90.80", "10.11.12.13", ProtocolType::tcp }, // Down
+          TCPHeader{ 80, 55000, TCPHeader::set_ack_flag() },
+          HTTPHeader{ "200 OK" }
+        },
+    // tcp_packets[6] > FIN ACK
+        {
+          IPv4Header{ "10.11.12.13", "200.100.90.80", ProtocolType::tcp }, // Up
+          TCPHeader{ 55000, 80, TCPHeader::set_fin_flag() }
+        },
+    // tcp_packets[7] < ACK
+        {
+          IPv4Header{ "200.100.90.80", "10.11.12.13", ProtocolType::tcp }, // Down
+          TCPHeader{ 80, 55000, TCPHeader::set_ack_flag() }
+        },
+    // tcp_packets[8] < FIN
+        {
+          IPv4Header{ "200.100.90.80", "10.11.12.13", ProtocolType::tcp }, // Down
+          TCPHeader{ 80, 55000, TCPHeader::set_fin_flag() }
+        },
+    // tcp_packets[9] > ACK
+        {
+          IPv4Header{ "10.11.12.13", "200.100.90.80", ProtocolType::tcp }, // Up
+          TCPHeader{ 55000, 80, TCPHeader::set_ack_timeout_flags() }
+        }
+    };
 
-    EXPECT_EQ(ntohs( tcp_packet.get_src_port() ), 55000);
-    EXPECT_EQ(ntohs( tcp_packet.get_dst_port() ), 80);
-    EXPECT_EQ(tcp_packet.get_app_proto<HTTPHeader>().get_url(), "http://www.recoduit.cxm/");
+    bool uplinks[] = {
+        true,  // 1 syn
+        false, // 2 syn_ack
+        true,  // 3 ack
+        true,  // 4 GET
+        false, // 5 200 OK
+        true,  // 6 fin_ack
+        false, // 7 ack
+        false, // 8 fin_ack
+        true,  // 9 fin
+    };
 
-    auto now = chrono::system_clock::now();
-    Message tcp_msg{now, tcp_packet, true};
-    network_adapter.accept( InformationChunk<Message>{ tcp_msg } );
-    network_adapter.accept( Release<Message>{tcp_msg, &network_adapter} );
+    for(auto i = 0u; i < sizeof tcp_packets / sizeof tcp_packets[0]; ++i) {
 
-    std::cout << tcp_msg;
+        EXPECT_EQ(ntohs( tcp_packets[i].get_src_port() ), (uplinks[i] ? 55000 : 80));
+        EXPECT_EQ(ntohs( tcp_packets[i].get_dst_port() ), (uplinks[i] ? 80 : 55000));
+        if( i == 3 ) { EXPECT_EQ(tcp_packets[i].get_app_proto<HTTPHeader>().get_url(), "http://www.recoduit.cxm/"); }
+        if( i == 4 ) { EXPECT_EQ(tcp_packets[i].get_app_proto<HTTPHeader>().get_url(), "200 OK"); }
+
+        auto now = chrono::system_clock::now();
+        Message tcp_msg{now, tcp_packets[i], uplinks[i]};
+        network_adapter.accept( InformationChunk<Message>{ tcp_msg } );
+        std::cout << tcp_msg;
+    }
+
+    // UDP connection example
 
     Packet udp_packet {
         IPv4Header{ "10.11.12.13", "200.100.90.80", ProtocolType::udp },
@@ -91,11 +154,11 @@ TEST(ConduitTest, MockDPIexample) {
     EXPECT_EQ(ntohs( udp_packet.get_dst_port() ), 80);
     EXPECT_EQ(udp_packet.get_app_proto<DNSHeader>().get_uri(), "www.recoduit.cxm");
 
-    now = chrono::system_clock::now();
+    auto now = chrono::system_clock::now();
     Message udp_msg{now, udp_packet, true};
     network_adapter.accept( InformationChunk<Message>{ udp_msg } );
-    network_adapter.accept( Release<Message>{udp_msg, &network_adapter} );
 
+    //network_adapter.accept( Release<Message>{udp_msg, &network_adapter} );
     std::cout << udp_msg;
 }
 

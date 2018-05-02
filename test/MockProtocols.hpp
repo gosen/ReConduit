@@ -3,6 +3,7 @@
 #include "ReConduitTypesGenerators.hpp"
 #include "MockLogger.hpp"
 #include "MockMessage.hpp"
+#include "MockTCPStateMachine.hpp"
 
 #include "sol.hpp"
 
@@ -35,8 +36,26 @@ struct TCPProtocol
         using namespace reconduits;
         auto& emsg = msg.get();
         emsg.append( "TCPProtocol" );
-        return std::pair{ NextSide::b, make_variant_message( msg ) };
+
+        update_connection_state( emsg );
+
+        if( state_.is_current<mock_state_machine::Established>() )
+            return std::pair{ NextSide::b, make_variant_setup_message(msg, conduit_origin) };
+        else if( state_.is_current<mock_state_machine::Closed>() )
+            return std::pair{ NextSide::b, make_variant_release_message(msg, conduit_origin) };
+        else
+            return std::pair{ NextSide::b, make_variant_message( msg ) };
     }
+
+private:
+
+    void update_connection_state(auto&& emsg)
+    {
+        const auto& pkt = emsg.packet();
+        state_.transition( mock_state_machine::Event{ pkt.is_ack(), pkt.is_syn(), pkt.is_fin(), pkt.is_timeout() } );
+    }
+
+    mock_state_machine::TCPStateMachine state_;
 };
 
 struct UDPProtocol

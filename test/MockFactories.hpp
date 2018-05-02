@@ -67,6 +67,8 @@ private:
 
     reconduits::Conduit* create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b);
     reconduits::Conduit* clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b);
+
+    bool is_l4_connection_established(reconduits::Setup<Message>& msg) const;
 };
 
 class UDPConnectionFactory : public ConnectionFactory<UDPConnectionFactory>

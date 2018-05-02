@@ -12,13 +12,6 @@
 #define DISPACHER_INVOKER(VARIANT, FUNC, ARGS...) \
     std::visit([](auto&& header) { return header.FUNC( ARGS ); }, VARIANT)
 
-#if 0
-#define DISPACHER_INVOKER_FOR(TYPE, VARIANT, FUNC, ARGS...) \
-    std::visit([](auto&& header) { \
-        using T = std::decay_t<decltype(header)>; \
-        if constexpr ( std::is_same_v<T, TYPE> ) return header.FUNC( ARGS ); }, VARIANT);
-#endif
-
 namespace mock_packet {
 
 enum class ProtocolType { tcp = 6, udp = 17 };
@@ -89,7 +82,7 @@ private:
 
 class TCPHeader
 {
-    using flags_type = std::tuple<bool, bool, bool>;
+    using flags_type = std::tuple<bool, bool, bool, bool>;
 
 public:
 
@@ -102,14 +95,17 @@ public:
     auto get_src_port() const noexcept { return src_; }
     auto get_dst_port() const noexcept { return dst_; }
 
-    bool is_ack() const { return std::get<0>( flags_ ); }
-    bool is_syn() const { return std::get<1>( flags_ ); }
-    bool is_fin() const { return std::get<2>( flags_ ); }
+    constexpr bool is_ack()     const noexcept { return std::get<0>( flags_ ); }
+    constexpr bool is_syn()     const noexcept { return std::get<1>( flags_ ); }
+    constexpr bool is_fin()     const noexcept { return std::get<2>( flags_ ); }
+    constexpr bool is_timeout() const noexcept { return std::get<3>( flags_ ); }
 
-    static auto set_syn_flag()      { return std::tuple{false, true, false}; }
-    static auto set_ack_flag()      { return std::tuple{true,  false, false}; }
-    static auto set_syn_ack_flags() { return std::tuple{true,  true,  false}; }
-    static auto set_fin_ack_flags() { return std::tuple{true,  false, true}; }
+    static auto set_syn_flag()          { return std::tuple{false, true,  false, false}; }
+    static auto set_ack_flag()          { return std::tuple{true,  false, false, false}; }
+    static auto set_syn_ack_flags()     { return std::tuple{true,  true,  false, false}; }
+    static auto set_fin_flag()          { return std::tuple{false, false, true,  false}; }
+    static auto set_fin_ack_flags()     { return std::tuple{true,  false, true,  false}; }
+    static auto set_ack_timeout_flags() { return std::tuple{true,  false, false, true }; }
 
 private:
     uint16_t src_;
@@ -166,10 +162,22 @@ public:
     using l3_id_type = ProtocolType;
     using l4_id_type = uint16_t;
 
-    Packet(const auto& network, const auto& transport, const auto& app = application_type{})
+    Packet(const auto& network, const auto& transport)
+        : network_{ network }
+        , transport_{ transport }
+        , application_{}
+    {}
+
+    Packet(const auto& network, const auto& transport, const auto& app)
         : network_{ network }
         , transport_{ transport }
         , application_{ app }
+    {}
+
+    Packet(auto&& network, auto&& transport)
+        : network_{ std::move( network ) }
+        , transport_{ std::move( transport ) }
+        , application_{}
     {}
 
     Packet(auto&& network, auto&& transport, auto&& app = application_type{})
@@ -185,14 +193,16 @@ public:
     constexpr auto get_src_port() const { return DISPACHER_INVOKER(transport_, get_src_port); }
     constexpr auto get_dst_port() const { return DISPACHER_INVOKER(transport_, get_dst_port); }
 
+    constexpr auto is_ack() const { return std::get<TCPHeader>( transport_ ).is_ack(); }
+    constexpr auto is_syn() const { return std::get<TCPHeader>( transport_ ).is_syn(); }
+    constexpr auto is_fin() const { return std::get<TCPHeader>( transport_ ).is_fin(); }
+
+    constexpr auto is_timeout() const { return std::get<TCPHeader>( transport_ ).is_timeout(); }
+
     template<typename T>
     const auto& get_app_proto() const { return std::get<T>( application_ ); }
 
 private:
-
-//    auto dispacher(auto&& v, auto&& func, auto&&... args) {
-//        return std::visit([](auto&& header) { return header.func( std::forward< decltype(args)>( args)... ); }, v)
-//    }
 
     network_type     network_;
     transport_type   transport_;

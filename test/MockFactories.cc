@@ -64,8 +64,20 @@ reconduits::Conduit* NetworkFactory::create_udp_connection(reconduits::Setup<Mes
     return udp_parser;
 }
 
+bool TCPConnectionFactory::is_l4_connection_established(reconduits::Setup<Message>& msg) const
+{
+    return msg.get().connection_established();
+}
+
 reconduits::Conduit* TCPConnectionFactory::create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
 {
+    //   ___________
+    //  /           |
+    // | l4_mux [bi]| -------------------------> | endpoint_adapter |
+    //  \___________|
+
+    if( ! is_l4_connection_established( msg ) ) return b;
+
     //   ___________
     //  /           |
     // | l4_mux [bi]| --> | http_parser [b]| --> | endpoint_adapter |
