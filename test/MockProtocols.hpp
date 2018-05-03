@@ -39,9 +39,10 @@ struct TCPProtocol
 
         update_connection_state( emsg );
 
-        if( state_.is_current<mock_state_machine::Established>() )
+        if( state_.is_current<mock_state_machine::Established>() ) {
+            emsg.set_connection_established();
             return std::pair{ NextSide::b, make_variant_setup_message(msg, conduit_origin) };
-        else if( state_.is_current<mock_state_machine::Closed>() )
+        } else if( state_.is_current<mock_state_machine::Closed>() )
             return std::pair{ NextSide::b, make_variant_release_message(msg, conduit_origin) };
         else
             return std::pair{ NextSide::b, make_variant_message( msg ) };

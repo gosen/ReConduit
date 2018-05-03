@@ -74,14 +74,20 @@ reconduits::Conduit* TCPConnectionFactory::create(reconduits::Setup<Message>& ms
     //   ___________
     //  /           |
     // | l4_mux [bi]| -------------------------> | endpoint_adapter |
-    //  \___________|
+    //  \__[b0]_____|                                    ^
+    //      ^                                            |
+    //      |                                            |
+    //      +-> |[a] connection_factoy [b]| -------------+
 
     if( ! is_l4_connection_established( msg ) ) return b;
 
     //   ___________
     //  /           |
     // | l4_mux [bi]| --> | http_parser [b]| --> | endpoint_adapter |
-    //  \___________|
+    //  \__[b0]_____|                                    ^
+    //      ^                                            |
+    //      |                                            |
+    //      +-> |[a] connection_factoy [b]| -------------+
 
     using namespace reconduits;
     auto http_parser = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ HTTPProtocol{} } };
@@ -111,7 +117,10 @@ reconduits::Conduit* UDPConnectionFactory::create(reconduits::Setup<Message>& ms
     //   ___________
     //  /           |
     // | l4_mux [bi]| --> | dns_parser [b]| --> | endpoint_adapter |
-    //  \___________|
+    //  \__[b0]_____|                                    ^
+    //      ^                                            |
+    //      |                                            |
+    //      +-> |[a] connection_factoy [b]| -------------+
 
     using namespace reconduits;
     auto dns_parser = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ DNSProtocol{} } };
