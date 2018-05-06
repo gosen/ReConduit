@@ -72,8 +72,8 @@ public:
         , dst_{ htons( dst ) }
     {}
 
-    auto get_src_port() const noexcept { return src_; }
-    auto get_dst_port() const noexcept { return dst_; }
+    auto get_src_port() const noexcept { return htons( src_ ); }
+    auto get_dst_port() const noexcept { return htons( dst_ ); }
 
 private:
     uint16_t src_;
@@ -92,8 +92,8 @@ public:
         , flags_{ f }
     {}
 
-    auto get_src_port() const noexcept { return src_; }
-    auto get_dst_port() const noexcept { return dst_; }
+    auto get_src_port() const noexcept { return htons( src_ ); }
+    auto get_dst_port() const noexcept { return htons( dst_ ); }
 
     constexpr bool is_ack()     const noexcept { return std::get<0>( flags_ ); }
     constexpr bool is_syn()     const noexcept { return std::get<1>( flags_ ); }
@@ -116,40 +116,42 @@ private:
 class HTTPHeader
 {
 public:
-    explicit HTTPHeader(std::string_view url)
-        : url_{ url }
+    explicit HTTPHeader(std::string_view data)
+        : data_{ data }
     {}
 
-    auto get_url() const  { return url_; }
+    const auto& get_url() const noexcept { return data_; }
+    const auto& get_response_code() const noexcept { return data_; }
 
 private:
-    std::string url_;
+    std::string data_;
 };
 
 class TLSHeader
 {
 public:
-    explicit TLSHeader(std::string_view server_name_idication)
-        : sni_{ server_name_idication }
+    explicit TLSHeader(std::string_view data)
+        : data_{ data }
     {}
 
-    const auto& get_server_name_idication() const  { return sni_; }
+    const auto& get_server_name_idication() const noexcept { return data_; }
+    const auto& get_application_layer_protocol_negociation() const noexcept { return data_; }
 
 private:
-    std::string sni_;
+    std::string data_;
 };
 
 class DNSHeader
 {
 public:
-    explicit DNSHeader(std::string_view uri)
-        : uri_{ uri }
+    explicit DNSHeader(std::string_view data)
+        : data_{ data }
     {}
 
-    auto get_uri() const  { return uri_; }
+    const auto& get_uri() const noexcept { return data_; }
 
 private:
-    std::string uri_;
+    std::string data_;
 };
 
 class Packet
@@ -160,7 +162,7 @@ public:
     using application_type = std::variant<std::monostate, HTTPHeader, TLSHeader, DNSHeader>;
 
     using l3_id_type = ProtocolType;
-    using l4_id_type = uint16_t;
+    using l4_id_type = std::tuple<uint32_t, uint32_t, uint16_t, uint16_t>;
 
     Packet(const auto& network, const auto& transport)
         : network_{ network }
@@ -209,4 +211,13 @@ private:
     application_type application_;
 };
 
+}
+
+inline std::ostream& operator<<(std::ostream& o, const mock_packet::Packet::l4_id_type& l4)
+{
+    return o << "["
+        << std::get<0>( l4 ) << ", "
+        << std::get<1>( l4 ) << ", "
+        << std::get<2>( l4 ) << ", "
+        << std::get<3>( l4 ) << "]";
 }

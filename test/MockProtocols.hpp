@@ -3,7 +3,6 @@
 #include "ReConduitTypesGenerators.hpp"
 #include "MockLogger.hpp"
 #include "MockMessage.hpp"
-#include "MockTCPStateMachine.hpp"
 
 #include "sol.hpp"
 
@@ -77,6 +76,17 @@ struct HTTPProtocol
         using namespace reconduits;
         auto& emsg = msg.get();
         emsg.append( "HTTPProtocol" );
+        return std::pair{ NextSide::b, make_variant_release_message(msg, conduit_origin) };
+    }
+};
+
+struct TLSProtocol
+{
+    constexpr auto accept(auto&& msg, reconduits::Conduit* conduit_origin)
+    {
+        using namespace reconduits;
+        auto& emsg = msg.get();
+        emsg.append( "TLSProtocol" );
         return std::pair{ NextSide::b, make_variant_release_message(msg, conduit_origin) };
     }
 };

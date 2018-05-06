@@ -3,10 +3,12 @@
 #include "ReConduitTypesGenerators.hpp"
 #include "MockLogger.hpp"
 #include "MockMessage.hpp"
+#include "MockTCPStateMachine.hpp"
 
 #include "sol.hpp"
 
 #include <unordered_map>
+#include <utility>
 #include <type_traits>
 #include <string>
 #include <sstream>
@@ -99,8 +101,8 @@ public:
     {
         auto it = mux_table_.find( std::get<mock_packet::Packet::l4_id_type>( msg.get().getL4Id() ) );
         bool found = it != mux_table_.cend();
-        SPDLOG_DEBUG(getLogger(), "L4Mux [{0:p}] has{1}found key {2}.", static_cast<const void*>(this), (found ? " ":" NOT "),
-                std::get<mock_packet::Packet::l4_id_type>( msg.get().getL4Id() ));
+        //SPDLOG_DEBUG(getLogger(), "L4Mux [{0:p}] has{1}found key {2}.", static_cast<const void*>(this), (found ? " ":" NOT "),
+        //        std::get<mock_packet::Packet::l4_id_type>( msg.get().getL4Id() ));
         return std::pair{(found ? it->second : nullptr), found};
     }
 
@@ -110,7 +112,7 @@ public:
         auto [it, inserted] = mux_table_.emplace(std::get<mock_packet::Packet::l4_id_type>( key ), &c);
         if( inserted ) return it->second;
         else {
-            getLogger()->warn("The new connection for key {} was not possible.", std::get<mock_packet::Packet::l4_id_type>( key ));
+            //getLogger()->warn("The new connection for key {} was not possible.", std::get<mock_packet::Packet::l4_id_type>( key ));
             return static_cast<reconduits::Conduit*>( nullptr );
         }
     }
@@ -135,7 +137,28 @@ public:
 
 protected:
 
-    using mux_table_type = std::unordered_map<key_type, reconduits::Conduit*>;
+
+    struct key_hash : public std::unary_function<key_type, std::size_t>
+    {
+       std::size_t operator()(const key_type& k) const
+       {
+          return std::get<0>( k ) ^ std::get<1>( k ) ^
+                 std::get<2>( k ) ^ std::get<3>( k );
+       }
+    };
+
+    struct key_equal : public std::binary_function<key_type, key_type, bool>
+    {
+       bool operator()(const key_type& v0, const key_type& v1) const
+       {
+          return  std::get<0>( v0 ) == std::get<0>( v1 ) &&
+                  std::get<1>( v0 ) == std::get<1>( v1 ) &&
+                  std::get<2>( v0 ) == std::get<2>( v1 ) &&
+                  std::get<3>( v0 ) == std::get<3>( v1 );
+       }
+    };
+
+    using mux_table_type = std::unordered_map<key_type, reconduits::Conduit*, key_hash, key_equal>;
     mux_table_type mux_table_;
 };
 

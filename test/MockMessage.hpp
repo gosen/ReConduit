@@ -26,13 +26,35 @@ public:
     {}
 
     constexpr auto getL3Id() const noexcept { return key_type{ packet_.get_proto() }; }
-    constexpr auto getL4Id() const noexcept { return key_type{  uplink_ ? packet_.get_src_port() : packet_.get_dst_port() }; }
+    constexpr auto getL4Id() const noexcept
+    {
+        return key_type{ uplink_ ?
+            std::tuple{packet_.get_src_addr(), packet_.get_dst_addr(), packet_.get_src_port(), packet_.get_dst_port()} :
+            std::tuple{packet_.get_dst_addr(), packet_.get_src_addr(), packet_.get_dst_port(), packet_.get_src_port()} };
+    }
     constexpr bool isUpLink() const noexcept { return uplink_; }
-    
-    const auto& packet() const { return packet_; }     
+
+    const auto& packet() const noexcept { return packet_; }
 
     bool connection_established() const { return established_; }
     void set_connection_established() { established_ = true; }
+
+    enum {
+        unkonwn_app_protocol = 0,
+        dns_app_protocol     = 53,
+        http_app_protocol    = 80,
+        tls_app_protocol     = 443,
+    };
+
+    auto app_proto() const noexcept
+    {
+        switch( ( isUpLink() ? packet_.get_dst_port() : packet_.get_src_port() ) ) {
+            case dns_app_protocol:  return dns_app_protocol;
+            case http_app_protocol: return http_app_protocol;
+            case tls_app_protocol:  return tls_app_protocol;
+            default: return unkonwn_app_protocol;
+        }
+    }
 
     void append(const std::string& s)
     {

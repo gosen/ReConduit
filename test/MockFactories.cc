@@ -28,7 +28,7 @@ reconduits::Conduit* NetworkFactory::create_tcp_connection(reconduits::Setup<Mes
     connection_factoy->setSideB( *b );
 
     auto& emsg = msg.get();
-    emsg.append( "NetworkFactory: Setup TCP connection" );
+    emsg.append( "NetworkFactory: Setup Conduits to cope with TCP connections" );
 
     auto key = emsg.getL3Id();
     a->insertInSideB(key, *tcp_parser);
@@ -57,7 +57,7 @@ reconduits::Conduit* NetworkFactory::create_udp_connection(reconduits::Setup<Mes
     connection_factoy->setSideB( *b );
 
     auto& emsg = msg.get();
-    emsg.append( "NetworkFactory: Setup UDP connection" );
+    emsg.append( "NetworkFactory: Setup Conduits to cope with UDP connections" );
 
     auto key = emsg.getL3Id();
     a->insertInSideB(key, *udp_parser);
@@ -69,8 +69,53 @@ bool TCPConnectionFactory::is_l4_connection_established(reconduits::Setup<Messag
     return msg.get().connection_established();
 }
 
+reconduits::Conduit* TCPConnectionFactory::select_application_protocol(reconduits::Setup<Message>& msg) const
+{
+    switch( msg.get().app_proto() ) {
+        case Message::http_app_protocol:
+        {
+            //   ___________
+            //  /           |
+            // | l4_mux [bi]| --> | http_parser [b]| --> | endpoint_adapter |
+            //  \__[b0]_____|                                    ^
+            //      ^                                            |
+            //      |                                            |
+            //      +-> |[a] connection_factoy [b]| -------------+
+
+            using namespace reconduits;
+            auto& emsg = msg.get();
+            emsg.append( "TCPConnectionFactory: Setup HTTP connection" );
+            return new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ HTTPProtocol{} } };
+        }
+        case Message::tls_app_protocol:
+        {
+            //   ___________
+            //  /           |
+            // | l4_mux [bi]| --> | tls_parser [b]| --> | endpoint_adapter |
+            //  \__[b0]_____|                                    ^
+            //      ^                                            |
+            //      |                                            |
+            //      +-> |[a] connection_factoy [b]| -------------+
+
+            using namespace reconduits;
+            auto& emsg = msg.get();
+            emsg.append( "TCPConnectionFactory: Setup TLS connection" );
+            return new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ TLSProtocol{} } };
+        }
+        default: return nullptr;
+    }
+}
+
 reconduits::Conduit* TCPConnectionFactory::create(reconduits::Setup<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
 {
+    if( is_l4_connection_established( msg ) ) {
+        if( auto application_protocol_parser = select_application_protocol(msg) ) {
+            application_protocol_parser->setSideB( *b );
+            a->insertInSideB(msg.get().getL4Id(), *application_protocol_parser);
+            return application_protocol_parser;
+        }
+    }
+
     //   ___________
     //  /           |
     // | l4_mux [bi]| -------------------------> | endpoint_adapter |
@@ -79,33 +124,29 @@ reconduits::Conduit* TCPConnectionFactory::create(reconduits::Setup<Message>& ms
     //      |                                            |
     //      +-> |[a] connection_factoy [b]| -------------+
 
-    if( ! is_l4_connection_established( msg ) ) return b;
-
-    //   ___________
-    //  /           |
-    // | l4_mux [bi]| --> | http_parser [b]| --> | endpoint_adapter |
-    //  \__[b0]_____|                                    ^
-    //      ^                                            |
-    //      |                                            |
-    //      +-> |[a] connection_factoy [b]| -------------+
-
-    using namespace reconduits;
-    auto http_parser = new ( getFromPool<sizeof(Conduit)>() ) Conduit{ Protocol{ HTTPProtocol{} } };
-
-    http_parser->setSideB( *b );
-
-    auto& emsg = msg.get();
-    emsg.append( "ConnectionFactory: Setup HTTP connection" );
-
-    auto key = emsg.getL4Id();
-    a->insertInSideB(key, *http_parser);
-    return http_parser;
+    return b;
 }
 
 reconduits::Conduit* TCPConnectionFactory::clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
 {
     auto& emsg = msg.get();
-    emsg.append( "ConnectionFactory: Release HTTP connection" );
+    switch( msg.get().app_proto() ) {
+        case Message::http_app_protocol:
+        {
+            emsg.append( "TCPConnectionFactory: Release HTTP connection" );
+            break;
+        }
+        case Message::tls_app_protocol:
+        {
+            emsg.append( "TCPConnectionFactory: Release TLS connection" );
+            break;
+        }
+        default:
+        {
+            emsg.append( "TCPConnectionFactory: Release Unkown connection" );
+            break;
+        }
+    }
     auto key = emsg.getL4Id();
     using namespace reconduits;
     putToPool<sizeof(Conduit)>( a->eraseFromSideB( key ) );
@@ -128,7 +169,7 @@ reconduits::Conduit* UDPConnectionFactory::create(reconduits::Setup<Message>& ms
     dns_parser->setSideB( *b );
 
     auto& emsg = msg.get();
-    emsg.append( "ConnectionFactory: Setup DNS connection" );
+    emsg.append( "UDPConnectionFactory: Setup DNS connection" );
 
     auto key = emsg.getL4Id();
     a->insertInSideB(key, *dns_parser);
@@ -138,7 +179,7 @@ reconduits::Conduit* UDPConnectionFactory::create(reconduits::Setup<Message>& ms
 reconduits::Conduit* UDPConnectionFactory::clean(reconduits::Release<Message>& msg, reconduits::Conduit* a, reconduits::Conduit* b)
 {
     auto& emsg = msg.get();
-    emsg.append( "ConnectionFactory: Release DNS connection" );
+    emsg.append( "UDPConnectionFactory: Release DNS connection" );
     auto key = emsg.getL4Id();
     using namespace reconduits;
     putToPool<sizeof(Conduit)>( a->eraseFromSideB( key ) );
