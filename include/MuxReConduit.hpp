@@ -76,7 +76,7 @@ private:
     {
         SPDLOG_DEBUG(getLogger(), "Mux Conduit [{:p}] with [a,b0] -> [{:p}, {:p}] accepts a new message.",
                 static_cast<void*>(this), static_cast<void*>(conduit_to_side_a_), static_cast<void*>(conduit_to_side_b0_));
-        auto accept = [](auto&& mux_ptr, auto&& msg_ptr) { return mux_ptr->accept( *msg_ptr ); };
+        auto accept = [ &ctx_conduit ](auto&& mux_ptr, auto&& msg_ptr) { return mux_ptr->accept(*msg_ptr, ctx_conduit); };
         auto [ next, next_v_msg ] = doubleDispatch_r(mux_, v_msg, accept);
         switch( next ) {
             case NextSide::a:  return std::pair{ conduit_to_side_a_, next_v_msg };

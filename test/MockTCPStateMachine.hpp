@@ -5,6 +5,13 @@
 
 namespace mock_state_machine {
 
+inline auto getLogger(std::string logger_name = "reconduit_test_fsm")
+{
+    static auto logger{ spdlog::stdout_color_mt( logger_name ) };
+    spdlog::set_level(spdlog::level::warn);
+    return logger;
+}
+
 struct Listen;
 struct SynSent;
 struct SynReceived;
@@ -16,59 +23,76 @@ struct Closing;
 struct CloseWait;
 struct LastAck;
 
+template<typename FROM, typename TO>
+void print_transist(TO to)
+{
+    std::cout << "Transist from \""<< FROM::name() << "\" to \""<< to->name() <<"\" state\n";
+}
+
 struct Closed {
     Closed() {}
-    explicit Closed(const Listen&) {}
-    explicit Closed(const SynSent&) {}
-    explicit Closed(const LastAck&) {}
-    explicit Closed(const TimeWait&) {}
+    explicit Closed(const Listen&) { print_transist<Listen>(this); }
+    explicit Closed(const SynSent&) { print_transist<SynSent>(this); }
+    explicit Closed(const LastAck&) { print_transist<LastAck>(this); }
+    explicit Closed(const TimeWait&) { print_transist<TimeWait>(this); }
+    static const char* name() { return "Closed"; }
 };
 
 struct Listen {
-    explicit Listen(const Closed&) {}
-    explicit Listen(const SynReceived&) {}
+    explicit Listen(const Closed&) { print_transist<Closed>(this); }
+    explicit Listen(const SynReceived&) { print_transist<SynReceived>(this); }
+    static const char* name() { return "Listen";}
 };
 
 struct SynSent {
-    explicit SynSent(const Listen&) {}
-    explicit SynSent(const Closed&) {}
+    explicit SynSent(const Listen&) { print_transist<Listen>(this); }
+    explicit SynSent(const Closed&) { print_transist<Closed>(this); }
+    static const char* name() { return "SynSent";}
 };
 
 struct SynReceived {
-    explicit SynReceived(const Listen&) {}
-    explicit SynReceived(const SynSent&) {}
+    explicit SynReceived(const Listen&) { print_transist<Listen>(this); }
+    explicit SynReceived(const SynSent&) { print_transist<SynSent>(this); }
+    static const char* name() { return "SynReceived";}
 };
 
 struct Established {
-    explicit Established(const SynSent&) {}
-    explicit Established(const SynReceived&) {}
+    explicit Established(const SynSent&) { print_transist<SynSent>(this); }
+    explicit Established(const SynReceived&) { print_transist<SynReceived>(this); }
+    static const char* name() { return "Established";}
 };
 
 struct FinWait_1 {
-    explicit FinWait_1(const SynReceived&) {}
-    explicit FinWait_1(const Established&) {}
+    explicit FinWait_1(const SynReceived&) { print_transist<SynReceived>(this); }
+    explicit FinWait_1(const Established&) { print_transist<Established>(this); }
+    static const char* name() { return "FinWait_1";}
 };
 
 struct FinWait_2 {
-    explicit FinWait_2(const FinWait_1&) {}
+    explicit FinWait_2(const FinWait_1&) { print_transist<FinWait_1>(this); }
+    static const char* name() { return "FinWait_2";}
 };
 
 struct TimeWait {
-    explicit TimeWait(const FinWait_1&) {}
-    explicit TimeWait(const FinWait_2&) {}
-    explicit TimeWait(const Closing&) {}
+    explicit TimeWait(const FinWait_1&) { print_transist<FinWait_1>(this); }
+    explicit TimeWait(const FinWait_2&) { print_transist<FinWait_2>(this); }
+    explicit TimeWait(const Closing&) { print_transist<Closing>(this); }
+    static const char* name() { return "TimeWait";}
 };
 
 struct Closing {
-    explicit Closing(const FinWait_1&) {}
+    explicit Closing(const FinWait_1&) { print_transist<FinWait_1>(this); }
+    static const char* name() { return "Closing";}
 };
 
 struct CloseWait {
-    explicit CloseWait(const Established&) {}
+    explicit CloseWait(const Established&) { print_transist<Established>(this); }
+    static const char* name() { return "CloseWait";}
 };
 
 struct LastAck {
-    explicit LastAck(const CloseWait&) {}
+    explicit LastAck(const CloseWait&) { print_transist<CloseWait>(this); }
+    static const char* name() { return "LastAck";}
 };
 
 class Event
@@ -100,7 +124,7 @@ private:
     }
     constexpr auto toListen(auto&& s) const noexcept { return rst_; }
     constexpr auto toSynSent(auto&& s) const noexcept { return syn_; }
-    constexpr auto toSynReceived(auto&& s) const noexcept { return syn_; }
+    constexpr auto toSynReceived(auto&& s) const noexcept { return syn_ && ack_; }
     constexpr auto toEstablished(auto&& s) const noexcept { return ack_; }
     constexpr auto toFinWait_1(auto&& s) const noexcept { return fin_; }
     constexpr auto toFinWait_2(auto&& s) const noexcept { return ack_; }
@@ -135,56 +159,60 @@ class TCPStateMachine
 public:
 
     template<typename S>
-    bool is_current() const { return std::get_if<S>( &state_ ); }
+    constexpr bool is_current() const { return std::get_if<S>( &state_ ); }
 
-    constexpr void transition(Event e)
+    constexpr auto transition(Event e)
     {
-        std::visit([ & ](auto&& state)
+        return std::visit([ & ](auto&& state)
         {
+            auto prev_state = *this;
             using T = std::decay_t<decltype( state )>;
             if constexpr ( enable_for<T, Listen, SynSent, LastAck, TimeWait>() ) {
-                if( e.toClose  ( state_ ) ) { state_ = Closed ( state ); return; }
+                if( e.toClose  ( state_ ) ) { state_ = Closed ( state ); return prev_state; }
             }
 
             if constexpr ( enable_for<T, Closed, SynReceived>() ) {
-                if( e.toListen ( state_ ) ) { state_ = Listen ( state ); return; }
+                if( e.toListen ( state_ ) ) { state_ = Listen ( state ); return prev_state; }
             }
 
             if constexpr ( enable_for<T, Listen, Closed>() ) {
-                if( e.toSynSent( state_ ) ) { state_ = SynSent( state ); return; }
+                if( e.toSynSent( state_ ) ) { state_ = SynSent( state ); return prev_state; }
             }
 
             if constexpr ( enable_for<T, Listen, SynSent>() ) {
-                if( e.toSynReceived( state_ ) ) { state_ = SynReceived( state ); return; }
+                if( e.toSynReceived( state_ ) ) { state_ = SynReceived( state ); return prev_state; }
             }
 
             if constexpr ( enable_for<T, SynSent, SynReceived>() ) {
-                if( e.toEstablished( state_ ) ) { state_ = Established( state ); return; }
+                if( e.toEstablished( state_ ) ) { state_ = Established( state ); return prev_state; }
             }
 
             if constexpr ( enable_for<T, SynReceived, Established>() ) {
-                if( e.toFinWait_1( state_ ) ) { state_ = FinWait_1( state ); return; }
+                if( e.toFinWait_1( state_ ) ) { state_ = FinWait_1( state ); return prev_state; }
             }
 
             if constexpr ( enable_for<T, FinWait_1>() ) {
-                if( e.toFinWait_2( state_ ) ) { state_ = FinWait_2( state ); return; }
+                if( e.toFinWait_2( state_ ) ) { state_ = FinWait_2( state ); return prev_state; }
             }
 
             if constexpr ( enable_for<T, FinWait_1, FinWait_2, Closing>() ) {
-                if( e.toTimeWait( state_ ) ) { state_ = TimeWait( state ); return; }
+                if( e.toTimeWait( state_ ) ) { state_ = TimeWait( state ); return prev_state; }
             }
 
             if constexpr ( enable_for<T, FinWait_1>() ) {
-                if( e.toClosing( state_ ) ) { state_ = Closing( state ); return; }
+                if( e.toClosing( state_ ) ) { state_ = Closing( state ); return prev_state; }
             }
 
             if constexpr ( enable_for<T, Established>() ) {
-                if( e.toCloseWait( state_ ) ) { state_ = CloseWait( state ); return; }
+                if( e.toCloseWait( state_ ) ) { state_ = CloseWait( state ); return prev_state; }
             }
 
             if constexpr ( enable_for<T, CloseWait>() ) {
-                if( e.toLastAck( state_ ) ) { state_ = LastAck( state ); return; }
+                if( e.toLastAck( state_ ) ) { state_ = LastAck( state ); return prev_state; }
             }
+
+            return prev_state;
+
         }, state_);
     }
 
