@@ -3,7 +3,7 @@ project(ReConduit CXX)
 #set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_CXX_FLAGS "-std=c++1z -O3 -Wall")
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "-std=c++1z -O0 -g -Wall -DSPDLOG_DEBUG_ON")
+set(CMAKE_CXX_FLAGS "-std=c++1z -O0 -g -Wall -DSPDLOG_DEBUG_ON -fconcepts")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -64,12 +64,12 @@ include_directories(${source_dir}/include)
 # (Sol is a C++ library binding to Lua)
 
 ExternalProject_Add(sol2
-  URL https://github.com/ThePhD/sol2/archive/v2.20.0.tar.gz
+  URL https://github.com/ThePhD/sol2/archive/v3.2.0.tar.gz
 
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/sol2
   INSTALL_COMMAND ""
 )
 ExternalProject_Get_Property(sol2 source_dir binary_dir)
 
-include_directories(${source_dir}/)
+include_directories(${source_dir}/include)
 include_directories(/usr/include/lua5.3/)

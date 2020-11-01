@@ -5,7 +5,7 @@
 #include "MockMessage.hpp"
 #include "MockTCPStateMachine.hpp"
 
-#include "sol.hpp"
+#include "sol/sol.hpp"
 
 #include <unordered_map>
 #include <utility>

@@ -4,7 +4,7 @@
 #include "MockLogger.hpp"
 #include "MockMessage.hpp"
 
-#include "sol.hpp"
+#include "sol/sol.hpp"
 
 #include <unordered_map>
 #include <type_traits>
