@@ -168,6 +168,21 @@ This library relies heavily on function return type deduction and other of the n
 
 You also need lua5.3 library to run UT.
 
+Or use Dockerfile instead:
+
+```cpp
+# docker build -t reconduit-test -f Dockerfile . && docker run --rm -ti --user $(id -u):$(id -g) reconduit-test
+
+. . .
+
+[       OK ] ConduitTest.MockDPIexample (3 ms)
+[----------] 1 test from ConduitTest (3 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test case ran. (4 ms total)
+[  PASSED  ] 1 test.
+```
+
 Usage
 -----
 
